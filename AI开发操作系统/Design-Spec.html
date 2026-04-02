@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataSphere Design System v4.2 — Visual Spec</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-page: #fafafa;
+  --bg-card: #ffffff;
+  --border: #e5e7eb;
+  --brand-orange: #ff6b35;
+  --brand-yellow: #f7b731;
+  --brand-gradient: linear-gradient(135deg, #ff6b35 0%, #f7b731 100%);
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --success: #22c55e;
+  --warning: #eab308;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --shadow-card: 0 4px 20px -2px rgba(0,0,0,0.05);
+  --shadow-brand: 0 10px 25px -5px rgba(255,107,53,0.3);
+  --font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Monaco', 'Consolas', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: #f5f3f0; color: var(--text-primary); line-height: 1.6; }
+
+/* --- Spec Layout --- */
+.spec-header {
+  background: var(--brand-gradient);
+  color: white;
+  padding: 60px 48px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.spec-header::after {
+  content: '';
+  position: absolute;
+  right: -80px;
+  top: -80px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.spec-header::before {
+  content: '';
+  position: absolute;
+  right: 80px;
+  bottom: -60px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+.spec-header h1 { font-size: 36px; font-weight: 700; letter-spacing: -0.5px; }
+.spec-header p { font-size: 15px; opacity: 0.85; margin-top: 8px; max-width: 600px; }
+.spec-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+
+.spec-nav {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 0 48px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.spec-nav a {
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.spec-nav a:hover { color: var(--brand-orange); }
+.spec-nav a.active { color: var(--brand-orange); border-bottom-color: var(--brand-orange); }
+
+.spec-body { max-width: 1200px; margin: 0 auto; padding: 40px 48px 120px; }
+
+.section { margin-bottom: 64px; }
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::before {
+  content: '';
+  width: 4px;
+  height: 22px;
+  border-radius: 2px;
+  background: var(--brand-gradient);
+  flex-shrink: 0;
+}
+.section-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 28px; }
+
+/* --- Color Swatches --- */
+.color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.color-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s;
+}
+.color-card:hover { transform: translateY(-2px); }
+.color-swatch { height: 80px; position: relative; }
+.color-swatch.gradient { background: var(--brand-gradient); }
+.color-info { padding: 12px 14px; }
+.color-name { font-size: 12px; font-weight: 600; }
+.color-token { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 2px; }
+.color-hex { font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); margin-top: 1px; }
+
+/* --- Typography --- */
+.type-specimen {
+  background: white;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.type-label {
+  flex-shrink: 0;
+  width: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.type-sample { flex: 1; }
+.type-meta { flex-shrink: 0; text-align: right; font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+
+/* --- Spacing --- */
+.spacing-row { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; }
+.spacing-bar { height: 28px; background: var(--brand-gradient); border-radius: 6px; opacity: 0.7; }
+.spacing-label { font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary); width: 80px; flex-shrink: 0; }
+
+/* --- Radius --- */
+.radius-grid { display: flex; gap: 24px; flex-wrap: wrap; }
+.radius-item {
+  width: 100px;
+  height: 100px;
+  background: white;
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+}
+.radius-val { font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary); margin-top: 8px; }
+
+/* --- Shadow --- */
+.shadow-grid { display: flex; gap: 32px; flex-wrap: wrap; }
+.shadow-item {
+  width: 160px;
+  height: 100px;
+  background: white;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.shadow-name { font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-top: 8px; }
+
+/* --- Components --- */
+.comp-row {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 20px;
+}
+.comp-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+}
+.comp-variants { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.comp-variant {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.comp-variant-label { font-size: 10px; color: var(--text-tertiary); font-weight: 500; }
+
+/* Live component styles */
+.ds-logo {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: var(--brand-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 20px;
+  box-shadow: var(--shadow-brand);
+}
+.ds-logo.sm { width: 40px; height: 40px; border-radius: 12px; font-size: 16px; }
+
+.ds-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 200px;
+}
+.ds-nav-item.inactive { color: var(--text-secondary); }
+.ds-nav-item.inactive:hover { background: #fff7ed; color: var(--brand-orange); }
+.ds-nav-item.active { background: var(--brand-gradient); color: white; box-shadow: var(--shadow-brand); }
+
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.ds-btn.primary { background: var(--brand-gradient); color: white; box-shadow: 0 4px 12px rgba(255,107,53,0.3); }
+.ds-btn.primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.ds-btn.solid { background: #ff6b35; color: white; }
+.ds-btn.solid:hover { background: #ea580c; }
+.ds-btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+.ds-btn.ghost:hover { border-color: var(--brand-orange); color: var(--brand-orange); }
+.ds-btn.disabled { background: #d1d5db; color: white; opacity: 0.5; cursor: not-allowed; }
+
+.ds-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 26px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.ds-chip.default { background: #f3f4f6; color: var(--text-primary); }
+.ds-chip.default:hover { background: #fff7f4; border-color: var(--brand-orange); color: var(--brand-orange); }
+
+.ds-input-wrapper {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  max-width: 500px;
+  transition: all 0.2s;
+}
+.ds-input-wrapper:focus-within {
+  border-color: #f0bf4c;
+  box-shadow: 0 4px 16px rgba(240,191,76,0.2);
+}
+.ds-input-wrapper textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 10px 4px;
+  resize: none;
+  color: var(--text-primary);
+  background: transparent;
+}
+.ds-input-wrapper textarea::placeholder { color: var(--text-tertiary); }
+.ds-input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0 6px;
+}
+.ds-toolbar-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ds-toolbar-icon:hover { background: #f9fafb; border-color: var(--border); color: var(--brand-orange); }
+
+/* Bubble */
+.ds-bubble-row { display: flex; gap: 14px; align-items: flex-start; max-width: 600px; }
+.ds-bubble-row.user { flex-direction: row-reverse; margin-left: auto; }
+.ds-avatar {
+  width: 40px; height: 40px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ds-avatar.ai { background: var(--brand-gradient); color: white; box-shadow: 0 4px 12px rgba(255,107,53,0.2); }
+.ds-avatar.user { border-radius: 50%; background: #4f46e5; overflow: hidden; }
+.ds-avatar.user img { width: 100%; height: 100%; object-fit: cover; }
+.ds-bubble {
+  padding: 12px 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 420px;
+}
+.ds-bubble.user-bubble {
+  background: var(--brand-gradient);
+  color: white;
+  border-radius: 16px 4px 16px 16px;
+  box-shadow: 0 4px 12px rgba(255,107,53,0.15);
+}
+.ds-bubble.ai-bubble {
+  background: white;
+  color: var(--text-primary);
+  border-radius: 4px 16px 16px 16px;
+  border: 1px solid rgba(249,115,22,0.12);
+  box-shadow: var(--shadow-card);
+}
+.ds-bubble-time { font-size: 10px; color: var(--text-tertiary); margin-top: 6px; }
+
+/* SQL Window */
+.ds-sql-window {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  max-width: 500px;
+}
+.ds-sql-header {
+  background: #f3f4f6;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ds-sql-title { font-size: 12px; color: var(--text-secondary); font-family: var(--font-mono); }
+.ds-sql-actions { display: flex; gap: 8px; }
+.ds-sql-actions span { font-size: 11px; color: var(--text-tertiary); cursor: pointer; }
+.ds-sql-actions span:hover { color: var(--brand-orange); }
+.ds-sql-body {
+  padding: 14px 16px;
+  background: #faf8f5;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre;
+  overflow-x: auto;
+}
+.ds-sql-body .kw { color: #7c3aed; font-weight: 600; }
+.ds-sql-body .fn { color: #0891b2; }
+.ds-sql-body .str { color: #059669; }
+.ds-sql-body .num { color: #d97706; }
+
+/* Data Table */
+.ds-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-card); max-width: 500px; }
+.ds-table thead th {
+  background: var(--brand-gradient);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 14px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+.ds-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: #374151;
+  background: white;
+}
+.ds-table tbody tr:hover td { background: #fef3c7; }
+
+/* Event Confirm Card */
+.ds-evt-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 500px;
+}
+.ds-evt-card:hover { border-color: #fdba74; background: rgba(255,237,213,0.4); }
+.ds-evt-card.selected { border-color: #fb923c; background: rgba(255,237,213,0.6); box-shadow: 0 0 0 2px rgba(249,115,22,0.3); }
+.ds-evt-text { flex: 1; }
+.ds-evt-text p { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.ds-evt-text span { font-size: 11px; color: var(--text-tertiary); }
+.ds-q-btn {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #fff7ed;
+  color: var(--brand-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  cursor: default;
+}
+.ds-check-badge {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--brand-orange);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.ds-feedback-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px dashed #d1d5db;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 500px;
+}
+.ds-feedback-btn:hover { border-color: #fdba74; background: rgba(255,237,213,0.2); }
+
+/* Toast */
+.ds-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid;
+}
+.ds-toast.success { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+.ds-toast.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.ds-toast.warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.ds-toast.info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+
+/* Drag Drop */
+.ds-drag-overlay {
+  border: 2.5px dashed var(--info);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.92);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 500px;
+}
+.ds-drag-icon {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--info);
+  font-size: 24px;
+}
+.ds-drag-title { font-size: 15px; font-weight: 600; color: #1e40af; }
+.ds-drag-hint { font-size: 12px; color: #64748b; }
+
+/* Sidebar Preview */
+.ds-sidebar-preview {
+  width: 240px;
+  background: white;
+  border-right: 1px solid #f3f4f6;
+  padding: 20px 16px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+/* Animation demos */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.anim-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.anim-box {
+  width: 80px;
+  height: 50px;
+  background: var(--brand-gradient);
+  border-radius: 10px;
+  opacity: 0.8;
+}
+.anim-name { font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); }
+.anim-demo:hover .anim-box { animation-play-state: running; }
+.anim-demo .anim-box.fade-in-up { animation: fadeInUp 0.8s ease-out infinite; }
+.anim-demo .anim-box.slide-right { animation: slideInRight 0.8s ease-out infinite; }
+.anim-demo .anim-box.slide-left { animation: slideInLeft 0.8s ease-out infinite; }
+
+/* Interaction flow */
+.flow-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.flow-step {
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.flow-step.input { background: #f3f4f6; color: var(--text-primary); }
+.flow-step.process { background: #fff7ed; color: #9a3412; }
+.flow-step.branch { background: #fef3c7; color: #92400e; border: 1px dashed #fbbf24; }
+.flow-step.output { background: #f0fdf4; color: #166534; }
+.flow-arrow { color: var(--text-tertiary); font-size: 16px; }
+
+/* Anti-pattern table */
+.ap-table { width: 100%; border-collapse: collapse; }
+.ap-table th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--text-secondary); border-bottom: 2px solid var(--border); }
+.ap-table td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
+.ap-status { font-size: 16px; }
+
+.spec-footer {
+  text-align: center;
+  padding: 40px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--border);
+  margin-top: 80px;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="spec-header">
+  <div class="spec-badge">DESIGN SYSTEM</div>
+  <h1>DataSphere v4.2</h1>
+  <p>智能数据管理平台 · 可视化设计规范<br>基于 frontend-design (Anthropic) + ui-ux-pro-max 理念构建</p>
+</div>
+
+<!-- Navigation -->
+<nav class="spec-nav" id="spec-nav">
+  <a href="#colors" class="active">配色</a>
+  <a href="#typography">字体</a>
+  <a href="#spacing">间距 & 圆角</a>
+  <a href="#shadows">阴影</a>
+  <a href="#buttons">按钮</a>
+  <a href="#inputs">输入框</a>
+  <a href="#bubbles">消息气泡</a>
+  <a href="#sql">SQL 窗口</a>
+  <a href="#table">数据表格</a>
+  <a href="#event">埋点确认</a>
+  <a href="#nav-items">导航</a>
+  <a href="#toasts">Toast</a>
+  <a href="#drag">拖拽上传</a>
+  <a href="#animations">动效</a>
+  <a href="#flow">交互流程</a>
+  <a href="#checklist">检查清单</a>
+</nav>
+
+<div class="spec-body">
+
+  <!-- ===== COLORS ===== -->
+  <div class="section" id="colors">
+    <div class="section-title">配色体系</div>
+    <div class="section-desc">60-30-10 法则 · 橙金渐变仅用于品牌标识元素，页面大面积留白</div>
+    <div class="color-grid">
+      <div class="color-card">
+        <div class="color-swatch" style="background:#fafafa; border-bottom: 1px solid #eee;"></div>
+        <div class="color-info"><div class="color-name">Page Background</div><div class="color-token">--color-bg-page</div><div class="color-hex">#fafafa</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#ffffff; border-bottom: 1px solid #eee;"></div>
+        <div class="color-info"><div class="color-name">Card Background</div><div class="color-token">--color-bg-card</div><div class="color-hex">#ffffff</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#e5e7eb;"></div>
+        <div class="color-info"><div class="color-name">Border</div><div class="color-token">--color-border</div><div class="color-hex">#e5e7eb</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#faf8f5; border-bottom: 1px solid #eee;"></div>
+        <div class="color-info"><div class="color-name">Code Background</div><div class="color-token">--sql-bg</div><div class="color-hex">#faf8f5</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#ff6b35;"></div>
+        <div class="color-info"><div class="color-name">Brand Orange</div><div class="color-token">--brand-orange</div><div class="color-hex">#ff6b35</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#f7b731;"></div>
+        <div class="color-info"><div class="color-name">Brand Yellow</div><div class="color-token">--brand-yellow</div><div class="color-hex">#f7b731</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch gradient"></div>
+        <div class="color-info"><div class="color-name">Brand Gradient</div><div class="color-token">--brand-gradient</div><div class="color-hex">135° #ff6b35 → #f7b731</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#1f2937;"></div>
+        <div class="color-info"><div class="color-name">Text Primary</div><div class="color-token">--text-primary</div><div class="color-hex">#1f2937</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#6b7280;"></div>
+        <div class="color-info"><div class="color-name">Text Secondary</div><div class="color-token">--text-secondary</div><div class="color-hex">#6b7280</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#9ca3af;"></div>
+        <div class="color-info"><div class="color-name">Text Tertiary</div><div class="color-token">--text-tertiary</div><div class="color-hex">#9ca3af</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#22c55e;"></div>
+        <div class="color-info"><div class="color-name">Success</div><div class="color-token">--success</div><div class="color-hex">#22c55e</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#eab308;"></div>
+        <div class="color-info"><div class="color-name">Warning</div><div class="color-token">--warning</div><div class="color-hex">#eab308</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#ef4444;"></div>
+        <div class="color-info"><div class="color-name">Danger</div><div class="color-token">--danger</div><div class="color-hex">#ef4444</div></div>
+      </div>
+      <div class="color-card">
+        <div class="color-swatch" style="background:#3b82f6;"></div>
+        <div class="color-info"><div class="color-name">Info</div><div class="color-token">--info</div><div class="color-hex">#3b82f6</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TYPOGRAPHY ===== -->
+  <div class="section" id="typography">
+    <div class="section-title">字体体系</div>
+    <div class="section-desc">正文 Noto Sans SC · 代码 Monaco/Consolas · 5 级字号层级</div>
+
+    <div class="type-specimen">
+      <div class="type-label">XL · 18px</div>
+      <div class="type-sample" style="font-size:18px; font-weight:700;">有什么可以帮您查询的？</div>
+      <div class="type-meta">font-weight: 700<br>用途: 欢迎标题</div>
+    </div>
+    <div class="type-specimen">
+      <div class="type-label">LG · 16px</div>
+      <div class="type-sample" style="font-size:16px; font-weight:600;">智能问数面板</div>
+      <div class="type-meta">font-weight: 600<br>用途: 面板标题</div>
+    </div>
+    <div class="type-specimen">
+      <div class="type-label">Base · 14px</div>
+      <div class="type-sample" style="font-size:14px; font-weight:500;">查询昨天 DAU 排名前十的国家</div>
+      <div class="type-meta">font-weight: 500<br>用途: 正文/消息/输入</div>
+    </div>
+    <div class="type-specimen">
+      <div class="type-label">SM · 12px</div>
+      <div class="type-sample" style="font-size:12px; font-weight:500; color:#6b7280;">generated_query.sql &nbsp;·&nbsp; Copy &nbsp;·&nbsp; Run</div>
+      <div class="type-meta">font-weight: 500<br>用途: Chip/表头/SQL标题</div>
+    </div>
+    <div class="type-specimen">
+      <div class="type-label">XS · 10px</div>
+      <div class="type-sample" style="font-size:10px; color:#9ca3af;">10:31 · DataSphere AI may produce inaccurate information</div>
+      <div class="type-meta">font-weight: 400<br>用途: 时间戳/辅助信息</div>
+    </div>
+    <div class="type-specimen" style="background: #faf8f5;">
+      <div class="type-label">Mono</div>
+      <div class="type-sample" style="font-size:12.5px; font-family: 'Monaco','Consolas',monospace; color: #374151;">SELECT dt, COUNT(*) AS cnt FROM dwd.dwd_log_action_front</div>
+      <div class="type-meta">Monaco / Consolas<br>用途: SQL 代码</div>
+    </div>
+  </div>
+
+  <!-- ===== SPACING ===== -->
+  <div class="section" id="spacing">
+    <div class="section-title">间距 & 圆角</div>
+    <div class="section-desc">8px 基准网格 · 统一 rounded-xl / rounded-2xl</div>
+
+    <div class="comp-row">
+      <div class="comp-label">Spacing Scale</div>
+      <div>
+        <div class="spacing-row"><div class="spacing-label">4px</div><div class="spacing-bar" style="width:16px;"></div></div>
+        <div class="spacing-row"><div class="spacing-label">8px</div><div class="spacing-bar" style="width:32px;"></div></div>
+        <div class="spacing-row"><div class="spacing-label">12px</div><div class="spacing-bar" style="width:48px;"></div></div>
+        <div class="spacing-row"><div class="spacing-label">16px</div><div class="spacing-bar" style="width:64px;"></div></div>
+        <div class="spacing-row"><div class="spacing-label">24px</div><div class="spacing-bar" style="width:96px;"></div></div>
+        <div class="spacing-row"><div class="spacing-label">32px</div><div class="spacing-bar" style="width:128px;"></div></div>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-label">Border Radius</div>
+      <div class="radius-grid">
+        <div class="radius-item" style="border-radius: 8px;"><span style="font-size:22px; color:#ccc;">▢</span><div class="radius-val">8px · rounded-lg</div></div>
+        <div class="radius-item" style="border-radius: 12px;"><span style="font-size:22px; color:#ccc;">▢</span><div class="radius-val">12px · rounded-xl</div></div>
+        <div class="radius-item" style="border-radius: 16px;"><span style="font-size:22px; color:#ccc;">▢</span><div class="radius-val">16px · rounded-2xl</div></div>
+        <div class="radius-item" style="border-radius: 20px;"><span style="font-size:22px; color:#ccc;">▢</span><div class="radius-val">20px · input</div></div>
+        <div class="radius-item" style="border-radius: 50%;"><span style="font-size:22px; color:#ccc;">▢</span><div class="radius-val">pill · rounded-full</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SHADOWS ===== -->
+  <div class="section" id="shadows">
+    <div class="section-title">阴影</div>
+    <div class="section-desc">3 级阴影：卡片 · 按钮 · 品牌辉光</div>
+    <div class="shadow-grid">
+      <div class="shadow-item" style="box-shadow: 0 1px 2px rgba(0,0,0,0.05);"><span style="font-size: 20px; color:#ddd;">▦</span><div class="shadow-name">shadow-btn</div></div>
+      <div class="shadow-item" style="box-shadow: var(--shadow-card);"><span style="font-size: 20px; color:#ddd;">▦</span><div class="shadow-name">shadow-card</div></div>
+      <div class="shadow-item" style="box-shadow: var(--shadow-brand);"><span style="font-size: 20px; color:#ddd;">▦</span><div class="shadow-name">shadow-brand</div></div>
+      <div class="shadow-item" style="box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);"><span style="font-size: 20px; color:#ddd;">▦</span><div class="shadow-name">shadow-2xl</div></div>
+    </div>
+  </div>
+
+  <!-- ===== BUTTONS ===== -->
+  <div class="section" id="buttons">
+    <div class="section-title">按钮</div>
+    <div class="section-desc">品牌渐变仅用于主发送按钮 · 功能按钮使用纯色或描边</div>
+    <div class="comp-row">
+      <div class="comp-label">Button Variants</div>
+      <div class="comp-variants">
+        <div class="comp-variant">
+          <div class="comp-variant-label">Primary (Gradient)</div>
+          <button class="ds-btn primary">发送 →</button>
+        </div>
+        <div class="comp-variant">
+          <div class="comp-variant-label">Solid</div>
+          <button class="ds-btn solid">确认选择</button>
+        </div>
+        <div class="comp-variant">
+          <div class="comp-variant-label">Ghost</div>
+          <button class="ds-btn ghost">取消</button>
+        </div>
+        <div class="comp-variant">
+          <div class="comp-variant-label">Disabled</div>
+          <button class="ds-btn disabled">发送 →</button>
+        </div>
+      </div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-label">Chips / Tags</div>
+      <div class="comp-variants" style="gap: 8px;">
+        <span class="ds-chip default">活跃</span>
+        <span class="ds-chip default">注册</span>
+        <span class="ds-chip default">付费</span>
+        <span class="ds-chip default">留存</span>
+        <span class="ds-chip default">创作行为</span>
+        <span class="ds-chip default">地区分布</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== INPUT ===== -->
+  <div class="section" id="inputs">
+    <div class="section-title">输入框</div>
+    <div class="section-desc">圆角胶囊输入框 · focus 态橙色环光 · 底部工具栏</div>
+    <div class="comp-row">
+      <div class="comp-label">Chat Input (点击输入框查看 focus 态)</div>
+      <div class="ds-input-wrapper">
+        <textarea rows="1" placeholder="输入您的数据查询需求..."></textarea>
+        <div class="ds-input-toolbar">
+          <div style="display:flex; gap:4px;">
+            <div class="ds-toolbar-icon"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></div>
+            <div class="ds-toolbar-icon"><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
+          </div>
+          <button class="ds-btn primary" style="padding: 6px 16px; font-size: 13px;">发送 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BUBBLES ===== -->
+  <div class="section" id="bubbles">
+    <div class="section-title">消息气泡</div>
+    <div class="section-desc">用户气泡右上角小圆角 · AI 气泡左上角小圆角 · AI 头像方形渐变</div>
+    <div class="comp-row" style="background: var(--bg-page);">
+      <div class="comp-label">Chat Bubbles</div>
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="ds-bubble-row user">
+          <div class="ds-avatar user"><img src="https://i.pravatar.cc/80?u=ds" alt=""></div>
+          <div>
+            <div class="ds-bubble user-bubble">查询昨天 DAU 排名前十的国家</div>
+            <div class="ds-bubble-time" style="text-align: right;">10:30</div>
+          </div>
+        </div>
+        <div class="ds-bubble-row">
+          <div class="ds-avatar ai"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></div>
+          <div>
+            <div class="ds-bubble ai-bubble">好的，我来为您查询昨日各国家的 DAU 数据，按降序排列取前十名。正在生成 SQL...</div>
+            <div class="ds-bubble-time">10:31</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SQL WINDOW ===== -->
+  <div class="section" id="sql">
+    <div class="section-title">SQL 窗口</div>
+    <div class="section-desc">灰色 header + 暖米色代码区 #faf8f5 · 等宽字体</div>
+    <div class="comp-row">
+      <div class="comp-label">SQL Code Window</div>
+      <div class="ds-sql-window">
+        <div class="ds-sql-header">
+          <div class="ds-sql-title">generated_query.sql</div>
+          <div class="ds-sql-actions"><span>Copy</span><span>Run ▶</span></div>
+        </div>
+        <div class="ds-sql-body"><span class="kw">SELECT</span>
+    dt,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> account_id) <span class="kw">AS</span> dau
+<span class="kw">FROM</span> dwd.dwd_log_action_front
+<span class="kw">WHERE</span> dt = <span class="str">'2026-03-30'</span>
+    <span class="kw">AND</span> app_id <span class="kw">LIKE</span> <span class="str">'%seaart'</span>
+<span class="kw">GROUP BY</span> dt
+<span class="kw">ORDER BY</span> dau <span class="kw">DESC</span>
+<span class="kw">LIMIT</span> <span class="num">10</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DATA TABLE ===== -->
+  <div class="section" id="table">
+    <div class="section-title">数据表格</div>
+    <div class="section-desc">渐变表头 · hover 暖黄高亮行 #fef3c7</div>
+    <div class="comp-row">
+      <div class="comp-label">Result Table (hover 行查看高亮)</div>
+      <table class="ds-table">
+        <thead><tr><th>DT</th><th>COUNTRY</th><th>DAU</th><th>RATE</th></tr></thead>
+        <tbody>
+          <tr><td>2026-03-30</td><td>US</td><td>128,432</td><td>12.5%</td></tr>
+          <tr><td>2026-03-30</td><td>BR</td><td>95,210</td><td>9.3%</td></tr>
+          <tr><td>2026-03-30</td><td>IN</td><td>87,654</td><td>8.5%</td></tr>
+          <tr><td>2026-03-30</td><td>RU</td><td>72,301</td><td>7.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== EVENT CONFIRM ===== -->
+  <div class="section" id="event">
+    <div class="section-title">埋点事件确认</div>
+    <div class="section-desc">多选卡片 · ? 热区 hover 出截图 · 反馈兜底原地变态</div>
+    <div class="comp-row" style="background: var(--bg-page);">
+      <div class="comp-label">Event Confirm Card (交互态展示)</div>
+      <div style="display: flex; gap: 14px; align-items: flex-start; max-width: 580px;">
+        <div class="ds-avatar ai" style="margin-top: 4px;"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></div>
+        <div style="flex: 1;">
+          <div style="background: white; border-radius: 4px 16px 16px 16px; border: 1px solid rgba(249,115,22,0.12); padding: 16px 20px; box-shadow: var(--shadow-card);">
+            <p style="font-size: 14px; margin-bottom: 14px; line-height: 1.6;">嘿，这个功能对应好几个埋点事件，可以多选哦～点击选中，hover 右边的 <span class="ds-q-btn" style="display:inline-flex; width:18px; height:18px; font-size:10px; vertical-align: middle;">?</span> 看截图确认</p>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div class="ds-evt-card selected">
+                <div class="ds-evt-text"><p>灵感续写 - 创作页点击续写按钮</p><span>entity_type: inspiration_write</span></div>
+                <div class="ds-q-btn">?</div>
+                <div class="ds-check-badge">✓</div>
+              </div>
+              <div class="ds-evt-card">
+                <div class="ds-evt-text"><p>灵感续写 - 续写结果页展示</p><span>entity_type: inspiration_result</span></div>
+                <div class="ds-q-btn">?</div>
+              </div>
+              <div class="ds-evt-card">
+                <div class="ds-evt-text"><p>灵感续写 - 续写结果点击使用</p><span>entity_type: inspiration_use</span></div>
+                <div class="ds-q-btn">?</div>
+              </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+              <button class="ds-btn solid" style="width: 100%; justify-content: center;">确认选择 (1)</button>
+              <div class="ds-feedback-btn">emmm 都不太对，帮我反馈一下</div>
+            </div>
+          </div>
+          <div class="ds-bubble-time" style="margin-top: 6px; margin-left: 4px;">10:32</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== NAVIGATION ===== -->
+  <div class="section" id="nav-items">
+    <div class="section-title">导航组件</div>
+    <div class="section-desc">侧边栏 w-64 · 激活态渐变 + 辉光阴影</div>
+    <div class="comp-row">
+      <div class="comp-label">Sidebar Navigation</div>
+      <div class="ds-sidebar-preview">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 32px;">
+          <div class="ds-logo sm">DS</div>
+          <span style="font-size: 18px; font-weight: 700;">DataSphere</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <div class="ds-nav-item active">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+            智能问数
+          </div>
+          <div class="ds-nav-item inactive">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            归因分析
+          </div>
+          <div class="ds-nav-item inactive">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            数据治理
+          </div>
+          <div class="ds-nav-item inactive">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            管理中心
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOASTS ===== -->
+  <div class="section" id="toasts">
+    <div class="section-title">Toast 通知</div>
+    <div class="section-desc">固定顶部居中 · 4 种语义色</div>
+    <div class="comp-row">
+      <div class="comp-label">Toast Variants</div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="ds-toast success">✓ SQL 已复制到剪贴板</div>
+        <div class="ds-toast error">✗ 查询执行失败：Column 'obj_name' cannot be resolved</div>
+        <div class="ds-toast warning">⚠ 数据延迟中，当前数值可能偏低</div>
+        <div class="ds-toast info">ℹ 已切换到语义理解模式</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DRAG DROP ===== -->
+  <div class="section" id="drag">
+    <div class="section-title">拖拽上传</div>
+    <div class="section-desc">蓝色虚线边框 · 毛玻璃背景 · 弹性入场动画</div>
+    <div class="comp-row">
+      <div class="comp-label">Drag & Drop Overlay</div>
+      <div class="ds-drag-overlay">
+        <div class="ds-drag-icon">↑</div>
+        <div class="ds-drag-title">松手上传文件</div>
+        <div class="ds-drag-hint">支持 CSV, Excel (.xlsx/.xls), TSV</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ANIMATIONS ===== -->
+  <div class="section" id="animations">
+    <div class="section-title">动效</div>
+    <div class="section-desc">入场动画 0.2-0.4s · 交互反馈 active:scale(0.98)</div>
+    <div class="comp-row">
+      <div class="comp-label">Animation Preview</div>
+      <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+        <div class="anim-demo"><div class="anim-box fade-in-up"></div><div class="anim-name">fadeInUp 0.4s</div><div style="font-size:10px; color:#9ca3af;">消息气泡入场</div></div>
+        <div class="anim-demo"><div class="anim-box slide-right"></div><div class="anim-name">slideInRight 0.3s</div><div style="font-size:10px; color:#9ca3af;">用户消息入场</div></div>
+        <div class="anim-demo"><div class="anim-box slide-left"></div><div class="anim-name">slideInLeft 0.3s</div><div style="font-size:10px; color:#9ca3af;">AI 消息入场</div></div>
+        <div class="anim-demo">
+          <div class="anim-box" style="transition: transform 0.1s; cursor:pointer;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'"></div>
+          <div class="anim-name">active:scale(0.98)</div><div style="font-size:10px; color:#9ca3af;">按钮按压（点击试试）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== INTERACTION FLOW ===== -->
+  <div class="section" id="flow">
+    <div class="section-title">交互流程</div>
+    <div class="section-desc">对话式查询 · 埋点确认仅阻断 SQL 生成，不阻断前置推理</div>
+
+    <div class="comp-row">
+      <div class="comp-label">主查询流程</div>
+      <div class="flow-container">
+        <div class="flow-step input">用户输入</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step process">语义理解</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step process">RAG 检索</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step branch">埋点匹配?</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step process">SQL 生成</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step process">执行 & 校验</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step output">结果展示</div>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-label">埋点确认分支</div>
+      <div class="flow-container">
+        <div class="flow-step branch">检测到埋点事件</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step process">展示候选卡片</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step input">用户多选确认</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step process">注入 entity 上下文</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step output">继续 SQL 生成</div>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-label">文件上传流程</div>
+      <div class="flow-container">
+        <div class="flow-step input">拖拽/点击上传</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step process">解析 CSV/XLSX</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step process">上下文标签</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step input">用户补充查询</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step output">带文件上下文的 SQL</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHECKLIST ===== -->
+  <div class="section" id="checklist">
+    <div class="section-title">Anti-Pattern 检查清单</div>
+    <div class="section-desc">基于 frontend-design + ui-ux-pro-max 标准</div>
+    <div class="comp-row">
+      <table class="ap-table">
+        <thead><tr><th>状态</th><th>检查项</th><th>规范</th></tr></thead>
+        <tbody>
+          <tr><td class="ap-status">✅</td><td>不使用 Inter/Roboto/Arial</td><td>使用 Noto Sans SC</td></tr>
+          <tr><td class="ap-status">✅</td><td>不使用紫色渐变 + 白底</td><td>使用橙金渐变</td></tr>
+          <tr><td class="ap-status">✅</td><td>不使用 emoji 作为功能图标</td><td>统一 SVG stroke icon</td></tr>
+          <tr><td class="ap-status">✅</td><td>所有可点击元素 cursor:pointer</td><td>? 热区例外: cursor:default</td></tr>
+          <tr><td class="ap-status">✅</td><td>hover 不导致布局抖动</td><td>border 替代 padding 变化</td></tr>
+          <tr><td class="ap-status">✅</td><td>disabled 态视觉区分</td><td>opacity:0.4 + cursor:not-allowed</td></tr>
+          <tr><td class="ap-status">✅</td><td>拖拽区域外释放正确恢复</td><td>dragleave + dragend 兜底</td></tr>
+          <tr><td class="ap-status">✅</td><td>反馈按钮不可重复操作</td><td>点击后禁用 + 变"已反馈"</td></tr>
+          <tr><td class="ap-status">⬜</td><td>暗色模式支持</td><td>待实现</td></tr>
+          <tr><td class="ap-status">⬜</td><td>prefers-reduced-motion</td><td>待实现</td></tr>
+          <tr><td class="ap-status">⬜</td><td>移动端响应式</td><td>当前仅桌面端</td></tr>
+          <tr><td class="ap-status">⬜</td><td>Tailwind CDN → PostCSS 构建</td><td>生产环境必改</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="spec-footer">
+  DataSphere Design System v4.2 · Visual Specification<br>
+  Generated 2026-03-31 · Based on frontend-design (Anthropic) + ui-ux-pro-max
+</div>
+
+<script>
+const navLinks = document.querySelectorAll('.spec-nav a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(a => a.classList.remove('active'));
+      const id = entry.target.id;
+      const link = document.querySelector(`.spec-nav a[href="#${id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-80px 0px -70% 0px' });
+document.querySelectorAll('.section[id]').forEach(s => observer.observe(s));
+navLinks.forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const el = document.querySelector(a.getAttribute('href'));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>

@@ -11,12 +11,11 @@
     "migrate": "tsx src/migrate.ts"
   },
   "dependencies": {
-    "better-sqlite3": "^11.5.0",
-    "drizzle-orm": "^0.36.1",
+    "@libsql/client": "^0.17.4",
+    "drizzle-orm": "^0.45.2",
     "ulid": "^2.3.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^22.9.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",

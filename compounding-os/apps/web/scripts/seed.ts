@@ -108,9 +108,10 @@ function toCents(yuan: number): number {
 
 async function main() {
   const db = createDb();
-  ensureSchema(db);
+  await ensureSchema(db);
 
-  const existingNames = new Set(listAssets(db).map((a) => a.name));
+  const assets = await listAssets(db);
+  const existingNames = new Set(assets.map((a) => a.name));
   let created = 0;
   let skipped = 0;
 
@@ -120,7 +121,7 @@ async function main() {
       continue;
     }
     const def = getDurableDefault(row.category);
-    createAsset(db, {
+    await createAsset(db, {
       kind: "durable",
       name: row.name,
       category: row.category,
@@ -149,7 +150,7 @@ async function main() {
       skipped += 1;
       continue;
     }
-    createAsset(db, {
+    await createAsset(db, {
       kind: "consumable",
       name: row.name,
       category: "消耗品",
@@ -169,4 +170,4 @@ async function main() {
   console.log(`导入完成：新建 ${created} 件，跳过（已存在同名资产） ${skipped} 件`);
 }
 
-main();
+main().catch(console.error);

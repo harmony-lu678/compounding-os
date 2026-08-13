@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const kind = url.searchParams.get("kind");
   const status = url.searchParams.get("status");
 
-  const assets = getAssetList({
+  const assets = await getAssetList({
     kind: kind === "durable" || kind === "consumable" ? kind : undefined,
     status: status === "active" || status === "disposed" || status === "archived" ? status : undefined,
   });
@@ -33,8 +33,8 @@ export async function POST(request: Request) {
   }
 
   const { name, occurredAt, payload } = parsed.data;
-  const instance = db();
-  const asset = createAsset(instance, {
+  const instance = await db();
+  const asset = await createAsset(instance, {
     kind: payload.kind,
     name,
     category: payload.category,
@@ -43,6 +43,6 @@ export async function POST(request: Request) {
     payload,
   });
 
-  const events = getAssetEvents(instance, asset.id);
+  const events = await getAssetEvents(instance, asset.id);
   return apiOk({ asset: summarize(asset, events) }, 201);
 }

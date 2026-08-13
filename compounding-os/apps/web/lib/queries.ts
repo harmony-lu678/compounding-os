@@ -11,19 +11,19 @@ function mid(range: Range): number {
   return (range.min + range.max) / 2;
 }
 
-export function getAssetList(filter: { kind?: "durable" | "consumable"; status?: "active" | "disposed" | "archived" } = {}): AssetSummary[] {
-  const instance = db();
-  const rows = listAssets(instance, filter);
-  const eventsByAsset = getEventsForAssets(instance, rows.map((r) => r.id));
+export async function getAssetList(filter: { kind?: "durable" | "consumable"; status?: "active" | "disposed" | "archived" } = {}): Promise<AssetSummary[]> {
+  const instance = await db();
+  const rows = await listAssets(instance, filter);
+  const eventsByAsset = await getEventsForAssets(instance, rows.map((r) => r.id));
   const asOf = todayIso();
   return rows.map((asset) => summarize(asset, eventsByAsset.get(asset.id) ?? [], asOf));
 }
 
-export function getAssetDetail(id: string): { asset: AssetSummary; events: ReturnType<typeof getAssetEvents> } | null {
-  const instance = db();
-  const asset = getAsset(instance, id);
+export async function getAssetDetail(id: string): Promise<{ asset: AssetSummary; events: ReturnType<typeof getAssetEvents> extends Promise<infer T> ? T : never } | null> {
+  const instance = await db();
+  const asset = await getAsset(instance, id);
   if (!asset) return null;
-  const events = getAssetEvents(instance, id);
+  const events = await getAssetEvents(instance, id);
   return { asset: summarize(asset, events), events };
 }
 
@@ -52,11 +52,11 @@ function quadrantKeyFor(isHighValue: boolean, isHighFreq: boolean): QuadrantKey 
 }
 
 /** 与 getDashboardData 里四象限完全一致的分类口径：仅统计在用耐用品，价格中位数 × usageRating==high。 */
-export function getQuadrantAssets(key: QuadrantKey): AssetSummary[] {
-  const instance = db();
+export async function getQuadrantAssets(key: QuadrantKey): Promise<AssetSummary[]> {
+  const instance = await db();
   const asOf = todayIso();
-  const activeAssets = listAssets(instance, { status: "active" });
-  const eventsByAsset = getEventsForAssets(instance, activeAssets.map((a) => a.id));
+  const activeAssets = await listAssets(instance, { status: "active" });
+  const eventsByAsset = await getEventsForAssets(instance, activeAssets.map((a) => a.id));
   const durableAssets = activeAssets.filter((a) => a.kind === "durable");
 
   const prices = durableAssets.map((a) => a.priceCents).sort((a, b) => a - b);
@@ -105,11 +105,11 @@ export interface DashboardData {
   topPerUseCost: { id: string; name: string; category: string; perUseCostCents: Range }[];
 }
 
-export function getDashboardData(): DashboardData {
-  const instance = db();
+export async function getDashboardData(): Promise<DashboardData> {
+  const instance = await db();
   const asOf = todayIso();
-  const activeAssets = listAssets(instance, { status: "active" });
-  const eventsByAsset = getEventsForAssets(instance, activeAssets.map((a) => a.id));
+  const activeAssets = await listAssets(instance, { status: "active" });
+  const eventsByAsset = await getEventsForAssets(instance, activeAssets.map((a) => a.id));
 
   const durableAssets = activeAssets.filter((a) => a.kind === "durable");
   const consumableAssets = activeAssets.filter((a) => a.kind === "consumable");
@@ -272,13 +272,13 @@ function lastCalibrationTouch(events: EventRow[]): string {
   return latest;
 }
 
-export function getWeeklyDigest(windowDays = 7): WeeklyDigest {
-  const instance = db();
+export async function getWeeklyDigest(windowDays = 7): Promise<WeeklyDigest> {
+  const instance = await db();
   const asOf = todayIso();
   const windowStart = addDays(asOf, -windowDays);
 
-  const allAssets = listAssets(instance);
-  const eventsByAsset = getEventsForAssets(instance, allAssets.map((a) => a.id));
+  const allAssets = await listAssets(instance);
+  const eventsByAsset = await getEventsForAssets(instance, allAssets.map((a) => a.id));
   const assetById = new Map(allAssets.map((a) => [a.id, a]));
 
   const newAssets: WeeklyDigest["newAssets"] = [];

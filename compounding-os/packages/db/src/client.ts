@@ -1,27 +1,38 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { createClient, type Client } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
 import * as schema from "./schema";
 
 export type Db = ReturnType<typeof drizzle<typeof schema>>;
 
 let dbInstance: Db | null = null;
-let sqliteInstance: Database.Database | null = null;
+let sqliteClient: Client | null = null;
 
 export function getDbPath(): string {
-  return process.env.COMPOS_DB_PATH ?? "./data/app.db";
+  // Can be a local file path or a turso URL
+  return process.env.COMPOS_DB_URL ?? process.env.COMPOS_DB_PATH ?? "file:./data/app.db";
 }
 
-export function createDb(path: string = getDbPath()): Db {
-  if (path !== ":memory:") {
-    const dir = dirname(path);
-    if (dir && !existsSync(dir)) mkdirSync(dir, { recursive: true });
+export function createDb(url: string = getDbPath()): Db {
+  const isLocalFile = url.startsWith("file:") || url.startsWith("/");
+  
+  if (isLocalFile) {
+    const actualPath = url.replace("file:", "");
+    if (actualPath !== ":memory:") {
+      const dir = dirname(actualPath);
+      if (dir && !existsSync(dir)) mkdirSync(dir, { recursive: true });
+    }
   }
-  const sqlite = new Database(path);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  return drizzle(sqlite, { schema });
+
+  const authToken = process.env.COMPOS_DB_AUTH_TOKEN;
+
+  sqliteClient = createClient({
+    url,
+    authToken,
+  });
+
+  return drizzle(sqliteClient, { schema });
 }
 
 /** 进程内单例，web 端 Route Handler 复用同一个连接。 */
@@ -32,9 +43,10 @@ export function getDb(): Db {
   return dbInstance;
 }
 
-export function ensureSchema(db: Db): void {
-  const sqlite = (db as unknown as { $client: Database.Database }).$client;
-  sqlite.exec(`
+export async function ensureSchema(db: Db): Promise<void> {
+  if (!sqliteClient) return;
+  // Use multiple statements for table creation
+  await sqliteClient.executeMultiple(`
     CREATE TABLE IF NOT EXISTS assets (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL DEFAULT 'default',

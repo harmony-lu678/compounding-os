@@ -32,7 +32,7 @@ function eventDetail(event: { type: string; payload: unknown }): string | null {
 
 export default async function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const detail = getAssetDetail(id);
+  const detail = await getAssetDetail(id);
   if (!detail) notFound();
 
   const { asset, events } = detail;

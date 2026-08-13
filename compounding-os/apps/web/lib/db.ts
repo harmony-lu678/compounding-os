@@ -2,10 +2,10 @@ import { ensureSchema, getDb } from "@compos/db";
 
 let initialized = false;
 
-export function db() {
+export async function db() {
   const instance = getDb();
   if (!initialized) {
-    ensureSchema(instance);
+    await ensureSchema(instance);
     initialized = true;
   }
   return instance;

@@ -8,7 +8,7 @@ function isQuadrantKey(value: string): value is QuadrantKey {
   return value in QUADRANT_LABELS;
 }
 
-function sumValueCents(assets: ReturnType<typeof getQuadrantAssets>) {
+function sumValueCents(assets: Awaited<ReturnType<typeof getQuadrantAssets>>) {
   return assets.reduce(
     (acc, a) => {
       if (a.metrics.kind !== "durable") return acc;
@@ -25,7 +25,7 @@ export default async function QuadrantAssetsPage({ params }: { params: Promise<{
   const { key } = await params;
   if (!isQuadrantKey(key)) notFound();
 
-  const assets = getQuadrantAssets(key);
+  const assets = await getQuadrantAssets(key);
   const valueCents = sumValueCents(assets);
 
   return (

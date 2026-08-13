@@ -15,8 +15,8 @@ const appendEventSchema = z.object({
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const instance = db();
-  const asset = getAsset(instance, id);
+  const instance = await db();
+  const asset = await getAsset(instance, id);
   if (!asset) return apiError("not_found", "资产不存在", 404);
 
   const body = await request.json().catch(() => null);
@@ -34,14 +34,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
-  appendEvent(instance, {
+  await appendEvent(instance, {
     assetId: id,
     type: parsed.data.type,
     occurredAt: parsed.data.occurredAt,
     payload: payloadResult.data,
   });
 
-  const refreshedAsset = getAsset(instance, id)!;
-  const events = getAssetEvents(instance, id);
-  return apiOk({ asset: summarize(refreshedAsset, events) }, 201);
+  const refreshedAsset = await getAsset(instance, id);
+  const events = await getAssetEvents(instance, id);
+  return apiOk({ asset: summarize(refreshedAsset!, events) }, 201);
 }

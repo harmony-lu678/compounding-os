@@ -43,8 +43,8 @@ function RankList({
   );
 }
 
-export default function WeeklyDigestPage() {
-  const digest = getWeeklyDigest();
+export default async function WeeklyDigestPage() {
+  const digest = await getWeeklyDigest();
   const toDaily = (items: typeof digest.cheapestDaily) =>
     items.map((i) => ({ id: i.id, name: i.name, category: i.category, costCents: i.dailyCostCents }));
   const toPerUse = (items: typeof digest.cheapestPerUse) =>

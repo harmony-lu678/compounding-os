@@ -1,0 +1,21 @@
+{
+  "name": "Personal Compounding OS",
+  "short_name": "Compounding",
+  "description": "记录你拥有的，计算你消耗的，衡量你积累的，预测你未来的。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#FAFAF8",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

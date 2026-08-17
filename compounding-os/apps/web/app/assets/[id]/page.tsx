@@ -1,15 +1,20 @@
 import { notFound } from "next/navigation";
 import { AssetActions } from "@/components/AssetActions";
 import { MetricBlock } from "@/components/AssumptionList";
+import { CategoryIcon } from "@/components/category";
 import {
   categoryColor,
   formatMoney,
   formatMoneyRange,
   primaryConsumableCost,
   primaryDurableCost,
+  statusTagColor,
   USAGE_RATING_LABEL,
 } from "@/lib/format";
+import { AssetPlanCard } from "@/components/AssetPlanCard";
+import { getAssetAccount } from "@/lib/plan";
 import { getAssetDetail } from "@/lib/queries";
+import { restockFromSummary } from "@/lib/restock";
 
 const EVENT_LABEL: Record<string, string> = {
   acquired: "购入",
@@ -36,21 +41,39 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
   if (!detail) notFound();
 
   const { asset, events } = detail;
+  const account = await getAssetAccount(id);
+  const restock = restockFromSummary(asset);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start gap-3">
+        <span className="icon-chip mt-1">
+          <CategoryIcon category={asset.category} />
+        </span>
         <div>
           <div className="mb-2 flex items-center gap-2">
             <span className={`tag ${categoryColor(asset.category)}`}>{asset.category}</span>
-            <span className="tag bg-neutral-100 text-neutral-600">
+            <span className={`tag ${statusTagColor()}`}>
               {asset.status === "active" ? "使用中" : asset.status === "disposed" ? "已结束" : "已归档"}
             </span>
           </div>
-          <h1 className="text-lg font-semibold">{asset.name}</h1>
+          <h1 className="text-[28px] font-semibold tracking-tight">{asset.name}</h1>
           <p className="mt-1 text-sm text-ink-soft">购入价 {formatMoney(asset.priceCents)} · {asset.createdAt.slice(0, 10)}</p>
         </div>
       </div>
+
+      {restock && (
+        <section className="card p-5">
+          <div className="text-xs font-medium text-brand-deep">补货提醒</div>
+          <h2 className="mt-2 text-base font-semibold">{restock.urgency === "overdue" ? "可以补货了" : "快用完了"}</h2>
+          <p className="mt-2 text-sm text-ink-soft">{restock.label}</p>
+          <a href="/assets/new" className="mt-3 inline-block text-sm text-ink-soft hover:text-ink">
+            补一件的话，去记一笔
+          </a>
+        </section>
+      )}
+
+      {account && <AssetPlanCard assetId={asset.id} account={account} />}
 
       <section className="card p-4">
         <h2 className="mb-3 text-sm font-medium text-ink-soft">操作</h2>
@@ -74,7 +97,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
             <section className="space-y-3">
               <h2 className="text-sm font-medium text-ink-soft">
                 成本指标 ·{" "}
-                <span className="tag bg-accent/10 text-accent">
+                <span className="tag tag-brand-soft">
                   该类目按{isDaily ? "天" : "次"}计成本
                 </span>{" "}
                 · <span className="font-medium text-ink">{USAGE_RATING_LABEL[durable.usageRating]}</span>
@@ -123,7 +146,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
         <section className="space-y-3">
           <h2 className="text-sm font-medium text-ink-soft">
             消耗指标 ·{" "}
-            <span className="tag bg-accent/10 text-accent">该类目按{isDaily ? "天" : "次"}计成本</span>{" "}
+            <span className="tag tag-brand-soft">该类目按{isDaily ? "天" : "次"}计成本</span>{" "}
             · {consumable.status === "completed" ? "已用完" : "进行中"} · 已使用{" "}
             {consumable.daysSinceStart} 天
           </h2>

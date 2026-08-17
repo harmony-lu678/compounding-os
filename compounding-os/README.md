@@ -10,6 +10,8 @@ self-hosted、数据完全归自己、web-first（后续扩展 iOS 与系统生�
 
 | 文档 | 内容 |
 |---|---|
+| [当前版本产品说明](docs/product_brief_current.md) | 产品做什么、现已上线能力（2026-08-17） |
+| [Daily Habit v0.2](docs/daily_habit_v0.2.md) | 首页从账本改为今日复利的重构说明 |
 | [产品规划 v0.1](docs/product_plan_v0.1.md) | 定位、产品原则、指标口径、MVP 范围、五期路线图 |
 | [架构文档 v0.1](docs/architecture_v0.1.md) | 技术选型、事件流数据模型、计算引擎、API、iOS 落地方案 |
 
@@ -27,4 +29,4 @@ TypeScript 全栈：Next.js（App Router）· SQLite + Drizzle · zod + OpenAPI 
 
 ## 状态
 
-规划与架构已定稿（2026-08-12），代码开发未开始。开发顺序见架构文档 §9 里程碑。
+Web MVP 可自用（2026-08-17）：录入、列表/详情校准、明细账本、图表趋势、导出。详见 [当前版本产品说明](docs/product_brief_current.md)。

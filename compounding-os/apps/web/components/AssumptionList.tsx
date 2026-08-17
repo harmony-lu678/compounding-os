@@ -7,9 +7,9 @@ const SOURCE_LABEL: Record<Assumption["source"], string> = {
 };
 
 const SOURCE_CLASS: Record<Assumption["source"], string> = {
-  user: "bg-blue-50 text-blue-700",
-  category_default: "bg-amber-50 text-amber-700",
-  measured: "bg-emerald-50 text-emerald-700",
+  user: "tag-brand",
+  category_default: "tag-brand-soft",
+  measured: "tag-neutral",
 };
 
 export function AssumptionList({ assumptions }: { assumptions: Assumption[] }) {

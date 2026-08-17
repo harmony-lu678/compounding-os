@@ -68,10 +68,10 @@ export function InlineUsageCount({
         onKeyDown={(e) => {
           if (e.key === "Enter") e.currentTarget.blur();
         }}
-        className="w-12 rounded border border-line bg-transparent px-1 py-0.5 text-right text-xs disabled:opacity-50"
+        className="w-12 rounded-lg border border-line bg-paper px-1 py-0.5 text-right text-xs disabled:opacity-50"
       />
       <span className="text-xs text-ink-soft">次{pending ? "…" : ""}</span>
-      {error && <span className="text-xs text-warn">{error}</span>}
+      {error && <span className="text-xs text-ink-soft">{error}</span>}
     </div>
   );
 }

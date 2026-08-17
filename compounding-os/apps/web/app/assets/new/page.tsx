@@ -3,295 +3,254 @@
 import {
   CONSUMABLE_SUBCATEGORY_DEFAULTS,
   DURABLE_CATEGORY_DEFAULTS,
-  FREQ_TIERS,
   getConsumableDefault,
   getDurableDefault,
   todayIso,
-  type FreqTier,
+  type ConsumableSubcategoryDefault,
+  type DurableCategoryDefault,
 } from "@compos/core";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CategoryIcon } from "@/components/category";
+import { IconBackspace, IconClose } from "@/components/icons";
 
-const DURABLE_CATEGORIES = Object.keys(DURABLE_CATEGORY_DEFAULTS);
-const CONSUMABLE_SUBCATEGORIES = Object.entries(CONSUMABLE_SUBCATEGORY_DEFAULTS);
+function durableCats(map: Record<string, DurableCategoryDefault>) {
+  return Object.keys(map).map((key) => ({ id: key, label: map[key]?.label ?? key }));
+}
 
-/** 衣物/床品有明显季节性，其他类目基本全年都用得到，所以季节性选择器只在这两类下出现。 */
-const SEASONAL_CATEGORIES = new Set(["衣物", "床品"]);
+function consumableCats(map: Record<string, ConsumableSubcategoryDefault>) {
+  return [{ id: "", label: "通用消耗品" }, ...Object.keys(map).map((key) => ({ id: key, label: map[key]?.label ?? key }))];
+}
 
-type SeasonPreset = "all_year" | "spring_autumn" | "summer" | "winter" | "custom";
+function Keypad({
+  value,
+  onChange,
+  onSubmit,
+  occurredAt,
+  setOccurredAt,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  onSubmit: () => void;
+  occurredAt: string;
+  setOccurredAt: (val: string) => void;
+}) {
+  const handleKey = (key: string) => {
+    if (key === "del") {
+      onChange(value.slice(0, -1));
+    } else if (key === ".") {
+      if (!value.includes(".")) onChange(value ? value + "." : "0.");
+    } else if (value === "0") {
+      onChange(key);
+    } else if (value.split(".")[1]?.length === 2) {
+      return;
+    } else {
+      onChange(value + key);
+    }
+  };
 
-/**
- * 月数只是默认参考值——因地制宜，具体几个月由用户自己判断
- * （比如南方的冬天可能比北方短，选「自定义」直接填月数即可）。
- */
-const SEASON_PRESETS: { key: SeasonPreset; label: string; months: number | null }[] = [
-  { key: "all_year", label: "全年皆可穿/用", months: 12 },
-  { key: "spring_autumn", label: "春秋两季（约4个月）", months: 4 },
-  { key: "summer", label: "夏季专属（约3个月）", months: 3 },
-  { key: "winter", label: "冬季专属（约3个月）", months: 3 },
-  { key: "custom", label: "自定义月数", months: null },
-];
+  return (
+    <div className="mt-auto grid grid-cols-4 select-none border-t border-line bg-card text-xl font-medium">
+      <div className="col-span-3 grid grid-cols-3">
+        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((k) => (
+          <button key={k} type="button" onClick={() => handleKey(k)} className="h-14 border-b border-r border-line active:bg-brand-muted">
+            {k}
+          </button>
+        ))}
+        <div className="relative flex h-14 items-center justify-center overflow-hidden border-r border-line">
+          <input
+            type="date"
+            value={occurredAt}
+            onChange={(e) => setOccurredAt(e.target.value)}
+            className="absolute inset-0 z-10 h-full w-full opacity-0"
+          />
+          <span className="text-sm">{occurredAt === todayIso() ? "今天" : occurredAt.slice(5)}</span>
+        </div>
+        <button type="button" onClick={() => handleKey("0")} className="h-14 border-r border-line active:bg-brand-muted">
+          0
+        </button>
+        <button type="button" onClick={() => handleKey(".")} className="h-14 border-r border-line active:bg-brand-muted">
+          .
+        </button>
+      </div>
+      <div className="flex flex-col">
+        <button type="button" onClick={() => handleKey("del")} className="flex h-14 items-center justify-center border-b border-line active:bg-brand-muted">
+          <IconBackspace size={22} />
+        </button>
+        <button type="button" onClick={onSubmit} className="btn-primary flex flex-1 items-center justify-center text-base">
+          完成
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function NewAssetPage() {
   const router = useRouter();
   const [kind, setKind] = useState<"durable" | "consumable">("durable");
+  const [selectedCat, setSelectedCat] = useState("电子产品");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [occurredAt, setOccurredAt] = useState(todayIso());
-  const [category, setCategory] = useState(DURABLE_CATEGORIES[0]!);
-  const [freqTier, setFreqTier] = useState<FreqTier>(getDurableDefault(DURABLE_CATEGORIES[0]!).defaultFreqTier);
-  const [subcategory, setSubcategory] = useState<string>("");
-  const [consumableFreqTier, setConsumableFreqTier] = useState<FreqTier>(
-    getConsumableDefault(undefined).defaultFreqTier,
-  );
-  const [seasonPreset, setSeasonPreset] = useState<SeasonPreset>("all_year");
-  const [customSeasonMonths, setCustomSeasonMonths] = useState("6");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [durableMap, setDurableMap] = useState(DURABLE_CATEGORY_DEFAULTS);
+  const [consumableMap, setConsumableMap] = useState(CONSUMABLE_SUBCATEGORY_DEFAULTS);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
-  const isSeasonalCategory = SEASONAL_CATEGORIES.has(category);
-  const activeMonthsPerYear =
-    seasonPreset === "custom"
-      ? Number(customSeasonMonths)
-      : SEASON_PRESETS.find((p) => p.key === seasonPreset)!.months!;
+  const durableCategories = durableCats(durableMap);
+  const consumableCategories = consumableCats(consumableMap);
+  const categories = kind === "durable" ? durableCategories : consumableCategories;
 
-  function onCategoryChange(next: string) {
-    setCategory(next);
-    setFreqTier(getDurableDefault(next).defaultFreqTier);
-    if (!SEASONAL_CATEGORIES.has(next)) setSeasonPreset("all_year");
-  }
+  useEffect(() => {
+    fetch("/api/v1/settings")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json?.durable) setDurableMap(json.durable);
+        if (json?.consumable) setConsumableMap(json.consumable);
+      })
+      .catch(() => undefined);
+  }, []);
 
-  function onSubcategoryChange(next: string) {
-    setSubcategory(next);
-    setConsumableFreqTier(getConsumableDefault(next || undefined).defaultFreqTier);
-  }
+  useEffect(() => {
+    if (kind === "durable" && !durableCategories.find((c) => c.id === selectedCat)) {
+      setSelectedCat(durableCategories[0]!.id);
+    } else if (kind === "consumable" && !consumableCategories.find((c) => c.id === selectedCat)) {
+      setSelectedCat(consumableCategories[0]!.id);
+    }
+  }, [kind, selectedCat, durableCategories, consumableCategories]);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     setPending(true);
     setError(null);
     try {
       const priceCents = Math.round(Number(price) * 100);
       if (!Number.isFinite(priceCents) || priceCents <= 0) throw new Error("请填写有效的价格");
-      if (!name.trim()) throw new Error("请填写名称");
-      if (kind === "durable" && isSeasonalCategory && (!Number.isFinite(activeMonthsPerYear) || activeMonthsPerYear < 1)) {
-        throw new Error("请填写有效的季节性月数（1~12）");
-      }
 
+      const finalName = name.trim() || selectedCat || "未命名资产";
       const payload =
         kind === "durable"
           ? (() => {
-              const def = getDurableDefault(category);
+              const def = getDurableDefault(selectedCat, durableMap);
               return {
                 kind: "durable" as const,
-                category,
+                category: selectedCat,
                 priceCents,
                 lifespanMonths: def.lifespanMonths,
                 residualRateMin: def.residualRateMin,
                 residualRateMax: def.residualRateMax,
-                usageFrequency: { type: "tier" as const, tier: freqTier },
-                ...(isSeasonalCategory ? { activeMonthsPerYear } : {}),
+                usageFrequency: { type: "tier" as const, tier: def.defaultFreqTier },
                 sources: {
-                  lifespanMonths: "category_default",
-                  residualRate: "category_default",
-                  usageFrequency: "category_default",
-                  ...(isSeasonalCategory ? { activeMonthsPerYear: "user" as const } : {}),
+                  lifespanMonths: "category_default" as const,
+                  residualRate: "category_default" as const,
+                  usageFrequency: "category_default" as const,
                 },
               };
             })()
           : {
               kind: "consumable" as const,
               category: "消耗品",
-              subcategory: subcategory || undefined,
+              subcategory: selectedCat || undefined,
               priceCents,
               startDate: occurredAt,
-              usageFrequency: { type: "tier" as const, tier: consumableFreqTier },
+              usageFrequency: {
+                type: "tier" as const,
+                tier: getConsumableDefault(selectedCat || undefined, consumableMap).defaultFreqTier,
+              },
             };
 
       const res = await fetch("/api/v1/assets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), occurredAt, payload }),
+        body: JSON.stringify({ name: finalName, occurredAt, payload }),
       });
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error?.message ?? "创建失败");
       }
+
       const { asset } = await res.json();
       router.push(`/assets/${asset.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "创建失败");
-    } finally {
       setPending(false);
     }
   }
 
-  return (
-    <div className="max-w-lg space-y-6">
-      <h1 className="text-lg font-semibold">录入资产</h1>
+  const selected = categories.find((c) => c.id === selectedCat);
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setKind("durable")}
-          className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium ${
-            kind === "durable" ? "border-accent bg-accent/10 text-accent" : "border-line text-ink-soft"
-          }`}
-        >
-          耐用品
-        </button>
-        <button
-          type="button"
-          onClick={() => setKind("consumable")}
-          className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium ${
-            kind === "consumable" ? "border-accent bg-accent/10 text-accent" : "border-line text-ink-soft"
-          }`}
-        >
-          消耗品
-        </button>
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col bg-paper">
+      <div className="brand-panel flex items-center justify-between px-4 py-3">
+        <Link href="/" className="rounded-full p-2 hover:bg-white/40" aria-label="关闭">
+          <IconClose size={18} />
+        </Link>
+        <div className="flex rounded-2xl bg-white/45 p-1 text-sm font-medium">
+          <button
+            type="button"
+            className={`rounded-xl px-5 py-1.5 transition-colors ${kind === "durable" ? "bg-card shadow-sm" : "text-ink-soft"}`}
+            onClick={() => setKind("durable")}
+          >
+            耐用品
+          </button>
+          <button
+            type="button"
+            className={`rounded-xl px-5 py-1.5 transition-colors ${kind === "consumable" ? "bg-card shadow-sm" : "text-ink-soft"}`}
+            onClick={() => setKind("consumable")}
+          >
+            消耗品
+          </button>
+        </div>
+        <div className="w-9" />
       </div>
 
-      <form onSubmit={onSubmit} className="card space-y-4 p-5">
-        <div>
-          <label className="mb-1 block text-xs text-ink-soft">名称</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="例如：MacBook Air m3 13寸"
-            className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
-          />
+      <div className="flex-1 overflow-y-auto px-5 py-6">
+        <div className="grid grid-cols-4 gap-x-3 gap-y-5 sm:grid-cols-5">
+          {categories.map((c) => {
+            const active = selectedCat === c.id;
+            return (
+              <button key={c.id || "generic"} type="button" className="flex flex-col items-center gap-2" onClick={() => setSelectedCat(c.id)}>
+                <span className={`icon-chip ${active ? "icon-chip-active" : ""}`}>
+                  <CategoryIcon category={c.id || c.label} />
+                </span>
+                <span className={`text-[11px] ${active ? "font-medium text-ink" : "text-ink-soft"}`}>{c.label || "通用"}</span>
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="mb-1 block text-xs text-ink-soft">价格 ¥</label>
+      <div className="border-t border-line bg-card shadow-[0_-8px_32px_rgb(28,25,20,0.06)]">
+        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+          <span className="icon-chip">
+            <CategoryIcon category={selected?.id || selected?.label || "消耗品"} />
+          </span>
+          <div className="flex min-w-0 flex-1 items-baseline">
+            <span className="shrink-0 text-sm font-medium">{selected?.label || "通用"}</span>
             <input
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="0.00"
-              className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
+              ref={nameInputRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="点此输入具体名称"
+              className="ml-2 w-full bg-transparent text-sm outline-none placeholder:text-ink-soft/50"
             />
           </div>
-          <div className="flex-1">
-            <label className="mb-1 block text-xs text-ink-soft">购入日期</label>
-            <input
-              type="date"
-              value={occurredAt}
-              onChange={(e) => setOccurredAt(e.target.value)}
-              className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
-            />
+          <div className="flex items-baseline gap-0.5 text-2xl font-semibold tabular-nums">
+            <span className="text-base font-medium">¥</span>
+            {price || "0.00"}
           </div>
         </div>
 
-        {kind === "durable" ? (
-          <>
-            <div>
-              <label className="mb-1 block text-xs text-ink-soft">类目</label>
-              <select
-                value={category}
-                onChange={(e) => onCategoryChange(e.target.value)}
-                className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
-              >
-                {DURABLE_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-ink-soft">使用频率（不确定就先选一个大概的，之后可校准）</label>
-              <select
-                value={freqTier}
-                onChange={(e) => setFreqTier(e.target.value as FreqTier)}
-                className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
-              >
-                {Object.entries(FREQ_TIERS).map(([key, def]) => (
-                  <option key={key} value={key}>
-                    {def.label}（{def.min}~{def.max} 次/月）
-                  </option>
-                ))}
-              </select>
-            </div>
-            {isSeasonalCategory && (
-              <div>
-                <label className="mb-1 block text-xs text-ink-soft">
-                  季节性（一年大概几个月会用到，因地制宜自己判断）
-                </label>
-                <select
-                  value={seasonPreset}
-                  onChange={(e) => setSeasonPreset(e.target.value as SeasonPreset)}
-                  className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
-                >
-                  {SEASON_PRESETS.map((p) => (
-                    <option key={p.key} value={p.key}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-                {seasonPreset === "custom" && (
-                  <input
-                    value={customSeasonMonths}
-                    onChange={(e) => setCustomSeasonMonths(e.target.value)}
-                    placeholder="月数（1~12）"
-                    className="mt-2 w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
-                  />
-                )}
-                <p className="mt-1 text-xs text-ink-soft">
-                  只影响单次成本的估算窗口，不影响持有成本/折旧——衣柜里放着不穿也会自然老化。
-                </p>
-              </div>
-            )}
-            <p className="text-xs text-ink-soft">
-              预计寿命 / 残值率将按「{category}」类目默认值预填，创建后可在详情页点开假设修改。
-            </p>
-          </>
+        {error && <div className="border-b border-line px-4 py-2 text-xs text-brand-deep">{error}</div>}
+
+        {pending ? (
+          <div className="flex h-[224px] items-center justify-center text-sm text-ink-soft">保存中...</div>
         ) : (
-          <>
-            <div>
-              <label className="mb-1 block text-xs text-ink-soft">子类目（用于预估消耗周期，可不选）</label>
-              <select
-                value={subcategory}
-                onChange={(e) => onSubcategoryChange(e.target.value)}
-                className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
-              >
-                <option value="">不确定（用通用默认）</option>
-                {CONSUMABLE_SUBCATEGORIES.map(([key, def]) => (
-                  <option key={key} value={key}>
-                    {def.label}（{def.cycleDaysMin}~{def.cycleDaysMax} 天 · 按{def.costMetric === "daily" ? "天" : "次"}计成本）
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-ink-soft">
-                预估使用频率（用于折算单次成本，不确定就先选一个大概的，之后可校准）
-              </label>
-              <select
-                value={consumableFreqTier}
-                onChange={(e) => setConsumableFreqTier(e.target.value as FreqTier)}
-                className="w-full rounded-md border border-line bg-transparent px-3 py-2 text-sm"
-              >
-                {Object.entries(FREQ_TIERS).map(([key, def]) => (
-                  <option key={key} value={key}>
-                    {def.label}（{def.min}~{def.max} 次/月）
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
+          <Keypad value={price} onChange={setPrice} onSubmit={handleSubmit} occurredAt={occurredAt} setOccurredAt={setOccurredAt} />
         )}
-
-        {error && <p className="text-xs text-warn">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-md bg-accent py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {pending ? "保存中…" : "保存"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }

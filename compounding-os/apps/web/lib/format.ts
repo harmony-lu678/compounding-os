@@ -25,20 +25,12 @@ export function formatDateRange(range: { min: string; max: string }): string {
   return `${range.min} ~ ${range.max}`;
 }
 
-export const CATEGORY_COLORS: Record<string, string> = {
-  电子产品: "bg-blue-50 text-blue-700",
-  家具: "bg-amber-50 text-amber-700",
-  电器: "bg-orange-50 text-orange-700",
-  衣物: "bg-pink-50 text-pink-700",
-  箱包: "bg-purple-50 text-purple-700",
-  日用品: "bg-teal-50 text-teal-700",
-  饰品: "bg-rose-50 text-rose-700",
-  床品: "bg-indigo-50 text-indigo-700",
-  消耗品: "bg-lime-50 text-lime-700",
-};
+export function categoryColor(_category: string): string {
+  return "tag-brand-soft";
+}
 
-export function categoryColor(category: string): string {
-  return CATEGORY_COLORS[category] ?? "bg-neutral-100 text-neutral-700";
+export function statusTagColor(): string {
+  return "tag-neutral";
 }
 
 export const USAGE_RATING_LABEL: Record<string, string> = {

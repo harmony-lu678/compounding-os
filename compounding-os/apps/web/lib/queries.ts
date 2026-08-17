@@ -1,5 +1,5 @@
 import { addDays, daysBetween, todayIso, type Range } from "@compos/core";
-import { getAsset, getAssetEvents, getEventsForAssets, listAssets, type AssetRow, type EventRow } from "@compos/db";
+import { getAsset, getAssetEvents, getEventsForAssets, listAssets, type EventRow } from "@compos/db";
 import { db } from "@/lib/db";
 import { computeAssetMetrics, summarize, type AssetSummary } from "@/lib/metrics";
 
@@ -381,3 +381,4 @@ export async function getWeeklyDigest(windowDays = 7): Promise<WeeklyDigest> {
     calibrationReminders,
   };
 }
+

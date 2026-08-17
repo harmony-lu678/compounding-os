@@ -31,7 +31,7 @@ function ActionShell({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:border-accent hover:text-accent"
+        className="rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:border-brand hover:text-brand"
       >
         {title}
       </button>
@@ -53,11 +53,11 @@ function ActionShell({
 function SubmitRow({ error, pending }: { error: string | null; pending: boolean }) {
   return (
     <div className="mt-3 flex items-center justify-between">
-      {error ? <span className="text-xs text-warn">{error}</span> : <span />}
+      {error ? <span className="text-xs text-ink-soft">{error}</span> : <span />}
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="rounded-md btn-primary px-3 py-1.5 text-xs disabled:opacity-50"
       >
         {pending ? "保存中…" : "保存"}
       </button>
@@ -443,11 +443,11 @@ export function MarkDepletedAction({ assetId }: { assetId: string }) {
         type="button"
         onClick={onClick}
         disabled={pending}
-        className="rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="rounded-full btn-primary px-3 py-1.5 text-xs disabled:opacity-50"
       >
         {pending ? "保存中…" : "用完了"}
       </button>
-      {error && <span className="text-xs text-warn">{error}</span>}
+      {error && <span className="text-xs text-ink-soft">{error}</span>}
     </div>
   );
 }

@@ -110,8 +110,17 @@ export const DURABLE_FALLBACK_DEFAULT: DurableCategoryDefault = {
   costMetric: "per_use",
 };
 
-export function getDurableDefault(category: string): DurableCategoryDefault {
-  return DURABLE_CATEGORY_DEFAULTS[category] ?? DURABLE_FALLBACK_DEFAULT;
+export function resolveDurableDefaults(
+  overrides?: Record<string, DurableCategoryDefault> | null,
+): Record<string, DurableCategoryDefault> {
+  return { ...DURABLE_CATEGORY_DEFAULTS, ...(overrides ?? {}) };
+}
+
+export function getDurableDefault(
+  category: string,
+  map?: Record<string, DurableCategoryDefault>,
+): DurableCategoryDefault {
+  return (map ?? DURABLE_CATEGORY_DEFAULTS)[category] ?? DURABLE_FALLBACK_DEFAULT;
 }
 
 /** 消耗品子类目的默认消耗周期（天）——首瓶未用完前的预估依据。 */
@@ -174,9 +183,18 @@ export const CONSUMABLE_FALLBACK_DEFAULT: ConsumableSubcategoryDefault = {
   costMetric: "per_use",
 };
 
-export function getConsumableDefault(subcategory?: string): ConsumableSubcategoryDefault {
+export function resolveConsumableDefaults(
+  overrides?: Record<string, ConsumableSubcategoryDefault> | null,
+): Record<string, ConsumableSubcategoryDefault> {
+  return { ...CONSUMABLE_SUBCATEGORY_DEFAULTS, ...(overrides ?? {}) };
+}
+
+export function getConsumableDefault(
+  subcategory?: string,
+  map?: Record<string, ConsumableSubcategoryDefault>,
+): ConsumableSubcategoryDefault {
   if (!subcategory) return CONSUMABLE_FALLBACK_DEFAULT;
-  return CONSUMABLE_SUBCATEGORY_DEFAULTS[subcategory] ?? CONSUMABLE_FALLBACK_DEFAULT;
+  return (map ?? CONSUMABLE_SUBCATEGORY_DEFAULTS)[subcategory] ?? CONSUMABLE_FALLBACK_DEFAULT;
 }
 
 export function residualRange(priceCents: number, def: DurableCategoryDefault): Range {

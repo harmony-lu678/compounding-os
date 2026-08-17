@@ -1,22 +1,5 @@
-import { NextResponse } from "next/server";
-import { exportAll } from "@compos/db";
-import { db as getWebDb } from "@/lib/db";
+import { apiError } from "@/lib/api";
 
 export async function GET() {
-  try {
-    const db = await getWebDb();
-    const data = await exportAll(db);
-    
-    return NextResponse.json({
-      exportedAt: new Date().toISOString(),
-      source: "Personal Compounding OS",
-      data
-    }, {
-      headers: {
-        "Content-Disposition": 'attachment; filename="compounding-os-export.json"'
-      }
-    });
-  } catch (err: any) {
-    return NextResponse.json({ error: { message: err.message } }, { status: 500 });
-  }
+  return apiError("forbidden", "不提供批量导出", 403);
 }

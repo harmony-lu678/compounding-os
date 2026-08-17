@@ -32,8 +32,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-paper px-4">
       <form onSubmit={handleLogin} className="card p-8 w-full max-w-sm flex flex-col gap-6">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-ink">Personal Compounding OS</h1>
-          <p className="text-sm text-ink-soft mt-2">单用户私有部署版</p>
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-lg font-semibold">C</div>
+          <h1 className="text-xl font-semibold text-ink">Compounding</h1>
+          <p className="text-sm text-ink-soft mt-2">个人账本 · 单用户部署</p>
         </div>
         
         <div className="flex flex-col gap-2">
@@ -42,15 +43,15 @@ export default function LoginPage() {
             type="password" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-line rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-ink bg-paper"
+            className="border border-line rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand bg-paper"
             placeholder="输入 APP_PASSWORD"
           />
-          {error && <p className="text-xs text-warn">{error}</p>}
+          {error && <p className="text-xs text-ink-soft">{error}</p>}
         </div>
 
         <button 
           type="submit"
-          className="bg-ink text-card rounded-lg py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+          className="btn-primary rounded-lg py-2 text-sm w-full"
         >
           进入账本
         </button>

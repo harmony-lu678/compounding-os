@@ -4,8 +4,8 @@
   "description": "记录你拥有的，计算你消耗的，衡量你积累的，预测你未来的。",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFAF8",
-  "theme_color": "#FAFAF8",
+  "background_color": "#FFEB88",
+  "theme_color": "#FFEB88",
   "icons": [
     {
       "src": "/icon-192x192.png",

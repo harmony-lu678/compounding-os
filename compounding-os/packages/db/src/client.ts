@@ -122,4 +122,13 @@ export async function ensureSchema(db: Db): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_assets_status ON assets(status);
     CREATE INDEX IF NOT EXISTS idx_life_events_occurred_at ON life_events(occurred_at);
   `);
+
+  const info = await sqliteClient.execute("PRAGMA table_info(assets)");
+  const names = info.rows.map((row) => String((row as { name?: unknown }).name ?? ""));
+  if (!names.includes("capture_mode")) {
+    await sqliteClient.execute("ALTER TABLE assets ADD COLUMN capture_mode TEXT");
+  }
+  if (!names.includes("seasonality")) {
+    await sqliteClient.execute("ALTER TABLE assets ADD COLUMN seasonality TEXT");
+  }
 }

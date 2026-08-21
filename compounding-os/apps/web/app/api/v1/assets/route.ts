@@ -1,4 +1,4 @@
-import { acquiredPayloadSchema } from "@compos/core";
+import { acquiredPayloadSchema, inferCaptureMode, inferSeasonality } from "@compos/core";
 import { createAsset, getAssetEvents } from "@compos/db";
 import { z } from "zod";
 import { apiError, apiOk } from "@/lib/api";
@@ -41,6 +41,13 @@ export async function POST(request: Request) {
     priceCents: payload.priceCents,
     occurredAt,
     payload,
+    captureMode: inferCaptureMode({
+      kind: payload.kind,
+      name,
+      category: payload.category,
+      usageFrequency: payload.usageFrequency,
+    }),
+    seasonality: inferSeasonality(name, payload.category),
   });
 
   const events = await getAssetEvents(instance, asset.id);

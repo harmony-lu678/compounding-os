@@ -1,8 +1,7 @@
 export const CHART_RANGES = [
-  { key: "7", days: 7, label: "7天" },
-  { key: "30", days: 30, label: "30天" },
-  { key: "90", days: 90, label: "90天" },
-  { key: "365", days: 365, label: "一年" },
+  { key: "7", days: 7, label: "7天", question: "最近发生了什么？", emphasis: "events" },
+  { key: "30", days: 30, label: "30天", question: "最近一个月我有什么变化？", emphasis: "change" },
+  { key: "90", days: 90, label: "90天", question: "我是不是在形成新的生活模式？", emphasis: "trend" },
 ] as const;
 
 export type ChartRangeKey = (typeof CHART_RANGES)[number]["key"];
@@ -79,11 +78,77 @@ export interface ChangeInsight {
   why: WhyItem[];
 }
 
+export type StoryKind = "usage" | "cost" | "spend" | "idle" | "season" | "lifecycle" | "steady";
+export type RangeEmphasis = "events" | "change" | "trend";
+
+export interface ChangeStory {
+  kind: StoryKind;
+  headline: string;
+  body: string;
+  usageThen: number;
+  usageNow: number;
+  usageDelta: number;
+  costThenYuan: number;
+  costNowYuan: number;
+  costDeltaYuan: number;
+  costDeltaPct: number | null;
+}
+
+export interface AttentionItem {
+  id: string;
+  kind: "season" | "idle" | "rising" | "consumable";
+  name: string;
+  line: string;
+  detail?: string;
+  href: string;
+  action?: "use";
+}
+
+export interface ChangeTimelineItem {
+  id: string;
+  date: string;
+  kind: "acquired" | "used" | "depleted" | "disposed" | "calibrated";
+  title: string;
+  detail?: string;
+  href?: string;
+}
+
+export interface UsageRankItem {
+  id: string;
+  name: string;
+  value: string;
+  href: string;
+}
+
+export interface UsageRanks {
+  most: UsageRankItem[];
+  rising: UsageRankItem[];
+  unused: UsageRankItem[];
+}
+
+export interface UtilShare {
+  key: "high" | "mid" | "low" | "idle";
+  label: string;
+  hint: string;
+  count: number;
+  pct: number;
+}
+
+export interface UpcomingItem {
+  id: string;
+  kind: "season" | "consumable" | "replace";
+  title: string;
+  detail: string;
+  href?: string;
+}
+
 export interface ChangeData {
   rangeKey: ChartRangeKey;
   windowStart: string;
   windowEnd: string;
   rangeLabel: string;
+  rangeQuestion: string;
+  emphasis: RangeEmphasis;
   series: HealthPoint[];
   cards: {
     valueYuan: number;
@@ -96,6 +161,13 @@ export interface ChangeData {
     spendDeltaPct: number | null;
   };
   insight: ChangeInsight;
+  story: ChangeStory;
+  attention: AttentionItem[];
+  timeline: ChangeTimelineItem[];
+  ranks: UsageRanks;
+  shares: UtilShare[];
+  upcoming: UpcomingItem[];
+  flow: { acquired: number; used: number; depleted: number; disposed: number };
   decay: CostDecayRow[];
   utilization: UtilBucket[];
   matrix: MatrixQuad[];
@@ -103,7 +175,7 @@ export interface ChangeData {
 }
 
 export function parseChartRange(raw?: string): ChartRangeKey {
-  if (raw === "180") return "365";
+  if (raw === "365" || raw === "180") return "90";
   return CHART_RANGES.some((r) => r.key === raw) ? (raw as ChartRangeKey) : "30";
 }
 

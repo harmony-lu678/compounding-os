@@ -11,6 +11,8 @@ export interface AssetRow {
   category: string;
   priceCents: number;
   status: "active" | "disposed" | "archived";
+  captureMode: string | null;
+  seasonality: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -38,6 +40,8 @@ export interface CreateAssetInput {
   priceCents: number;
   occurredAt: string;
   payload: unknown;
+  captureMode?: string | null;
+  seasonality?: string | null;
 }
 
 export async function createAsset(db: Db, input: CreateAssetInput): Promise<AssetRow> {
@@ -53,6 +57,8 @@ export async function createAsset(db: Db, input: CreateAssetInput): Promise<Asse
       category: input.category,
       priceCents: input.priceCents,
       status: "active",
+      captureMode: input.captureMode ?? null,
+      seasonality: input.seasonality ?? null,
       createdAt: now,
       updatedAt: now,
     });
@@ -76,10 +82,20 @@ export async function createAsset(db: Db, input: CreateAssetInput): Promise<Asse
     category: input.category,
     priceCents: input.priceCents,
     status: "active",
+    captureMode: input.captureMode ?? null,
+    seasonality: input.seasonality ?? null,
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
   };
+}
+
+export async function updateAssetCaptureMode(db: Db, id: string, captureMode: string): Promise<void> {
+  await db.update(assets).set({ captureMode, updatedAt: nowIso() }).where(eq(assets.id, id));
+}
+
+export async function updateAssetSeasonality(db: Db, id: string, seasonality: string): Promise<void> {
+  await db.update(assets).set({ seasonality, updatedAt: nowIso() }).where(eq(assets.id, id));
 }
 
 export interface AppendEventInput {

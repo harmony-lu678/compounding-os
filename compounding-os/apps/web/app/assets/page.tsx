@@ -1,9 +1,9 @@
 import { AssetListPanel } from "@/components/AssetListPanel";
 import { getAssetList } from "@/lib/queries";
-import { getSkillSummaries } from "@/lib/skills";
+
+export const dynamic = "force-dynamic";
 
 export default async function AssetsPage() {
-  const [assets, skills] = await Promise.all([getAssetList(), getSkillSummaries()]);
-
-  return <AssetListPanel assets={assets} skills={skills} />;
+  const assets = await getAssetList();
+  return <AssetListPanel assets={assets} />;
 }

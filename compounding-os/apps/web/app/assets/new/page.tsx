@@ -95,6 +95,7 @@ export default function NewAssetPage() {
   const [occurredAt, setOccurredAt] = useState(todayIso());
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replenishFrom, setReplenishFrom] = useState<string | null>(null);
   const [durableMap, setDurableMap] = useState(DURABLE_CATEGORY_DEFAULTS);
   const [consumableMap, setConsumableMap] = useState(CONSUMABLE_SUBCATEGORY_DEFAULTS);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +103,14 @@ export default function NewAssetPage() {
   const durableCategories = durableCats(durableMap);
   const consumableCategories = consumableCats(consumableMap);
   const categories = kind === "durable" ? durableCategories : consumableCategories;
+
+  useEffect(() => {
+    const from = new URLSearchParams(window.location.search).get("from");
+    if (from) {
+      setReplenishFrom(from);
+      setKind("consumable");
+    }
+  }, []);
 
   useEffect(() => {
     fetch("/api/v1/settings")
@@ -207,6 +216,11 @@ export default function NewAssetPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-6">
+        {replenishFrom && (
+          <p className="mb-4 rounded-2xl bg-brand-muted px-3 py-2 text-xs">
+            这是一次补货。上一件的周期已经记下，新的一瓶会开始下一轮预测。
+          </p>
+        )}
         <div className="grid grid-cols-4 gap-x-3 gap-y-5 sm:grid-cols-5">
           {categories.map((c) => {
             const active = selectedCat === c.id;

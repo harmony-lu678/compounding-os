@@ -10,6 +10,9 @@ self-hosted、数据完全归自己、web-first（后续扩展 iOS 与系统生�
 
 | 文档 | 内容 |
 |---|---|
+| [产品规划 v0.2](docs/product_plan_v0.2.md) | Today / Assets / 变化 三页架构与精简原则 |
+| [记录模式](docs/capture_mode.md) | 特别使用：日常自动算，低频随手记 |
+| [季节资产](docs/seasonal_assets.md) | 预期窗口 vs 实际使用，闲置雷达 |
 | [当前版本产品说明](docs/product_brief_current.md) | 产品做什么、现已上线能力（2026-08-17） |
 | [Daily Habit v0.2](docs/daily_habit_v0.2.md) | 首页从账本改为今日复利的重构说明 |
 | [产品规划 v0.1](docs/product_plan_v0.1.md) | 定位、产品原则、指标口径、MVP 范围、五期路线图 |
@@ -29,4 +32,4 @@ TypeScript 全栈：Next.js（App Router）· SQLite + Drizzle · zod + OpenAPI 
 
 ## 状态
 
-Web MVP 可自用（2026-08-17）：录入、列表/详情校准、明细账本、图表趋势、导出。详见 [当前版本产品说明](docs/product_brief_current.md)。
+v0.2 主路径（2026-08-21）：今日 / 资产 / 变化。计算引擎保留，报表与四象限退出一级导航。本地默认 [http://localhost:2888](http://localhost:2888)。

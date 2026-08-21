@@ -15,6 +15,8 @@ export const assets = sqliteTable("assets", {
   status: text("status", { enum: ["active", "disposed", "archived"] })
     .notNull()
     .default("active"),
+  captureMode: text("capture_mode"),
+  seasonality: text("seasonality"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
   deletedAt: text("deleted_at"),

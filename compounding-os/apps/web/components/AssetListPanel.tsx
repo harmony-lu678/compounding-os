@@ -1,63 +1,72 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ConsumableAssetRow, DurableAssetRow, SkillAssetRow } from "@/components/AssetRows";
-import { SkillCreateBar } from "@/components/SkillCreateBar";
+import { ConsumableAssetRow, DurableAssetRow } from "@/components/AssetRows";
 import type { AssetSummary } from "@/lib/metrics";
-import type { SkillSummary } from "@/lib/skill-types";
 
-type KindFilter = "all" | "durable" | "consumable" | "skill";
+type KindFilter = "all" | "durable" | "consumable";
 
 const FILTERS: { key: KindFilter; label: string }[] = [
   { key: "all", label: "全部" },
   { key: "durable", label: "耐用品" },
   { key: "consumable", label: "消耗品" },
-  { key: "skill", label: "能力" },
 ];
 
-export function AssetListPanel({
-  assets,
-  skills,
-}: {
-  assets: AssetSummary[];
-  skills: SkillSummary[];
-}) {
+function mid(range: { min: number; max: number }) {
+  return (range.min + range.max) / 2;
+}
+
+function yuan(n: number, digits = 0) {
+  return n.toFixed(digits);
+}
+
+export function AssetListPanel({ assets }: { assets: AssetSummary[] }) {
   const [filter, setFilter] = useState<KindFilter>("all");
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
 
-  const filteredAssets = useMemo(() => {
-    if (filter === "skill") return [];
-    if (filter === "all") return assets;
-    return assets.filter((asset) => asset.kind === filter);
-  }, [assets, filter]);
+  const filtered = useMemo(() => {
+    const byKind = filter === "all" ? assets : assets.filter((asset) => asset.kind === filter);
+    if (!q) return byKind;
+    return byKind.filter(
+      (asset) => asset.name.toLowerCase().includes(q) || asset.category.toLowerCase().includes(q),
+    );
+  }, [assets, filter, q]);
 
-  const showSkills = filter === "all" || filter === "skill";
-  const visibleSkills = showSkills ? skills : [];
-
-  const durableCount = assets.filter((a) => a.kind === "durable").length;
-  const consumableCount = assets.filter((a) => a.kind === "consumable").length;
-  const empty = filteredAssets.length === 0 && visibleSkills.length === 0;
+  const totalValue = assets.reduce((sum, asset) => {
+    if (asset.metrics.kind !== "durable") return sum;
+    return sum + mid(asset.metrics.durable.currentValueCents.value);
+  }, 0);
+  const dailyCost = assets.reduce((sum, asset) => {
+    if (asset.metrics.kind === "durable") return sum + mid(asset.metrics.durable.realizedDailyCostCents.value);
+    return sum + mid(asset.metrics.consumable.dailyCostCents.value);
+  }, 0);
 
   return (
     <div className="space-y-5">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-[28px] font-semibold tracking-tight">所有资产</h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            {filter === "all" &&
-              `${assets.length + skills.length} 件 · 耐用品 ${durableCount} · 消耗品 ${consumableCount} · 能力 ${skills.length}`}
-            {filter === "durable" && `${filteredAssets.length} 件耐用品`}
-            {filter === "consumable" && `${filteredAssets.length} 件消耗品`}
-            {filter === "skill" && `${skills.length} 项能力 · 学习挂在这里，不算折旧`}
-          </p>
+      <div>
+        <h1 className="text-[28px] font-semibold tracking-tight">资产</h1>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="card px-4 py-3">
+            <div className="text-xs text-ink-soft">总资产</div>
+            <div className="mt-1 text-xl font-semibold tabular-nums">¥{yuan(totalValue / 100)}</div>
+          </div>
+          <div className="card px-4 py-3">
+            <div className="text-xs text-ink-soft">今日成本</div>
+            <div className="mt-1 text-xl font-semibold tabular-nums">¥{yuan(dailyCost / 100, 1)}</div>
+          </div>
         </div>
-        <Link
-          href="/plan"
-          className="inline-flex shrink-0 items-center rounded-2xl btn-primary px-4 py-2 text-sm"
-        >
-          规划
-        </Link>
       </div>
+
+      <label className="block">
+        <span className="sr-only">搜索资产</span>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="搜索资产"
+          className="w-full rounded-2xl border border-line bg-card px-4 py-2.5 text-sm outline-none focus:border-brand-strong"
+        />
+      </label>
 
       <div className="inline-flex rounded-2xl bg-line/60 p-1" role="tablist" aria-label="资产类型筛选">
         {FILTERS.map(({ key, label }) => {
@@ -79,35 +88,19 @@ export function AssetListPanel({
         })}
       </div>
 
-      {filter === "skill" && (
-        <div className="card p-4">
-          <p className="mb-3 text-xs text-ink-soft">先在这里建一项能力，再到「今日 → 学习」记一次。</p>
-          <SkillCreateBar />
-        </div>
-      )}
-
       <div className="card overflow-hidden divide-y divide-line">
-        {empty ? (
+        {filtered.length === 0 ? (
           <div className="p-10 text-center text-sm text-ink-soft">
-            {filter === "skill"
-              ? "还没有能力资产。上面填一个名字就能建。"
-              : assets.length === 0 && skills.length === 0
-                ? "还没有录入任何资产。"
-                : "当前筛选下没有资产。"}
+            {q ? "没有匹配的资产。" : assets.length === 0 ? "还没有录入任何资产。" : "当前筛选下没有资产。"}
           </div>
         ) : (
-          <>
-            {filteredAssets.map((asset) =>
-              asset.kind === "durable" ? (
-                <DurableAssetRow key={asset.id} asset={asset} />
-              ) : (
-                <ConsumableAssetRow key={asset.id} asset={asset} />
-              ),
-            )}
-            {visibleSkills.map((skill) => (
-              <SkillAssetRow key={skill.id} skill={skill} />
-            ))}
-          </>
+          filtered.map((asset) =>
+            asset.kind === "durable" ? (
+              <DurableAssetRow key={asset.id} asset={asset} />
+            ) : (
+              <ConsumableAssetRow key={asset.id} asset={asset} />
+            ),
+          )
         )}
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { todayIso } from "@compos/core";
 import { appendEvent, appendLifeEvent, createSkill, getAsset, listSkills } from "@compos/db";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { apiError, apiOk } from "@/lib/api";
 import { db } from "@/lib/db";
@@ -116,5 +117,7 @@ export async function POST(request: Request) {
     occurredAt,
     payload,
   });
+  revalidatePath("/");
+  revalidatePath("/assets");
   return apiOk({ event, label }, 201);
 }

@@ -1,19 +1,22 @@
-import { addDays, daysBetween, todayIso } from "@compos/core";
+import { addDays, daysBetween, inCalendarWindow, todayIso } from "@compos/core";
 import { getEventsForAssets, listAssets, listLifeEvents, listSkills, type AssetRow, type EventRow } from "@compos/db";
+import { resolveCaptureMode } from "@/lib/capture";
 import { db } from "@/lib/db";
+import { buildSeasonToday, resolveSeasonality } from "@/lib/season";
 import { computeAssetMetrics, summarize } from "@/lib/metrics";
 import { collectRestockReminders } from "@/lib/restock";
-import type { RitualKey, TimelineItem, TodayInsight, TodayView } from "@/lib/today-types";
+import {
+  ritualTimelineTitle,
+  type CaptureToday,
+  type RecentChange,
+  type RitualKey,
+  type SpecialUseAsset,
+  type TimelineItem,
+  type TodayInsight,
+  type TodayView,
+} from "@/lib/today-types";
 
 const WEEKDAYS = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-
-const RITUAL_TITLE: Record<string, string> = {
-  use: "使用了已有资产",
-  learn: "给能力账户加了一次投入",
-  save: "做了一次节省",
-  create: "创造了一次产出",
-  clean: "清理了资产",
-};
 
 function mid(range: { min: number; max: number }) {
   return (range.min + range.max) / 2;
@@ -166,10 +169,181 @@ function pickInsight(asOf: string, ctx: {
   return candidates[seed % candidates.length]!;
 }
 
+function pickRotated<T>(items: T[]): T | undefined {
+  if (items.length === 0) return undefined;
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function buildRecentChanges(
+  assets: AssetRow[],
+  eventsByAsset: Map<string, EventRow[]>,
+  asOf: string,
+  weekAgo: string,
+  nowP: ReturnType<typeof portfolio>,
+  weekP: ReturnType<typeof portfolio>,
+): RecentChange[] {
+  let disposed = 0;
+  let depleted = 0;
+  let acquired = 0;
+  let usageUp = 0;
+
+  for (const asset of assets) {
+    const events = eventsByAsset.get(asset.id) ?? [];
+    for (const e of events) {
+      if (e.occurredAt < weekAgo || e.occurredAt > asOf) continue;
+      if (e.type === "disposed") disposed += 1;
+      if (e.type === "depleted") depleted += 1;
+      if (e.type === "acquired") acquired += 1;
+    }
+    const now = snapshot(asset, events, asOf);
+    const then = snapshot(asset, events, weekAgo);
+    if (now && then && now.usage - then.usage >= 0.05) usageUp += 1;
+  }
+
+  const costDelta = (nowP.dailyCost - weekP.dailyCost) / 100;
+  const items: RecentChange[] = [];
+  if (acquired) items.push({ sign: "+", text: `${acquired} 件新资产` });
+  if (disposed) items.push({ sign: "+", text: `${disposed} 件资产被处置` });
+  if (usageUp) items.push({ sign: "+", text: `${usageUp} 件资产使用率提高` });
+  if (Math.abs(costDelta) >= 0.5) {
+    items.push({
+      sign: costDelta < 0 ? "-" : "+",
+      text: `¥${Math.abs(costDelta).toFixed(0)} 日均成本`,
+    });
+  }
+  if (depleted) items.push({ sign: "+", text: `${depleted} 个消耗品周期完成` });
+  if (items.length === 0) items.push({ sign: "", text: "这 7 天很稳，资产没有大的进出。" });
+  return items;
+}
+
+function buildCaptureToday(
+  assets: AssetRow[],
+  eventsByAsset: Map<string, EventRow[]>,
+  asOf: string,
+): CaptureToday {
+  const monthAgo = addDays(asOf, -30);
+  const dailyAuto: { id: string; name: string }[] = [];
+  const offSeasonDaily: SpecialUseAsset[] = [];
+  const specialPool: Array<{
+    id: string;
+    name: string;
+    category: string;
+    todayCount: number;
+    lastUsedAt?: string;
+    loggedCount30: number;
+    lastCalibratedAt?: string;
+    mode: "quick" | "batch";
+  }> = [];
+
+  for (const asset of assets) {
+    if (asset.status !== "active" || asset.kind !== "durable") continue;
+    const events = eventsByAsset.get(asset.id) ?? [];
+    const mode = resolveCaptureMode(asset, events);
+    const uses = events.filter((e) => e.type === "usage_logged");
+    const todayCount = uses.filter((e) => e.occurredAt === asOf).length;
+    const lastUsedAt = uses.length ? uses[uses.length - 1]!.occurredAt : undefined;
+    const loggedCount30 = uses.filter((e) => e.occurredAt >= monthAgo).length;
+    const lastCalibratedAt = events.filter((e) => e.type === "usage_calibrated").at(-1)?.occurredAt;
+
+    const seasonality = resolveSeasonality(asset);
+    const inSeason = seasonality === "year" || seasonality === "scene" || inCalendarWindow(seasonality, asOf);
+
+    if (mode === "auto") {
+      if (inSeason) {
+        dailyAuto.push({ id: asset.id, name: asset.name });
+        continue;
+      }
+      offSeasonDaily.push({ id: asset.id, name: asset.name, category: asset.category, todayCount });
+      continue;
+    }
+    if (!inSeason) {
+      offSeasonDaily.push({ id: asset.id, name: asset.name, category: asset.category, todayCount });
+      continue;
+    }
+    specialPool.push({
+      id: asset.id,
+      name: asset.name,
+      category: asset.category,
+      todayCount,
+      lastUsedAt,
+      loggedCount30,
+      lastCalibratedAt,
+      mode,
+    });
+  }
+
+  specialPool.sort((a, b) => {
+    if (a.todayCount !== b.todayCount) return b.todayCount - a.todayCount;
+    if ((a.lastUsedAt ?? "") !== (b.lastUsedAt ?? "")) return (a.lastUsedAt ?? "") < (b.lastUsedAt ?? "") ? 1 : -1;
+    return a.name.localeCompare(b.name, "zh");
+  });
+
+  const chips = specialPool.slice(0, 8).map(({ id, name, category, todayCount }) => ({
+    id,
+    name,
+    category,
+    todayCount,
+  }));
+  const chipIds = new Set(chips.map((c) => c.id));
+  const others = [
+    ...specialPool
+      .filter((a) => !chipIds.has(a.id))
+      .map(({ id, name, category, todayCount }) => ({ id, name, category, todayCount })),
+    ...offSeasonDaily.filter((a) => !chipIds.has(a.id)),
+  ];
+
+  const todaySpecialCount = specialPool.filter((a) => a.todayCount > 0).length;
+
+  const weekAgo = addDays(asOf, -7);
+  const lowFreq = specialPool.filter((a) => {
+    if (a.todayCount > 0) return false;
+    if (a.loggedCount30 >= 8) return false;
+    return a.mode === "quick" || a.loggedCount30 <= 3;
+  });
+
+  const watchCandidates = lowFreq.filter((a) => !a.lastUsedAt || a.lastUsedAt <= weekAgo);
+  const calibCandidates = lowFreq.filter((a) => !a.lastCalibratedAt || a.lastCalibratedAt < monthAgo);
+
+  const watchAsset = pickRotated(watchCandidates);
+  const calibrationAsset = pickRotated(calibCandidates.filter((a) => a.id !== watchAsset?.id));
+
+  const watchPool = watchCandidates.map((a) => ({
+    id: a.id,
+    name: a.name,
+    daysSinceLastUse: a.lastUsedAt ? daysBetween(a.lastUsedAt, asOf) : null,
+  }));
+  const calibAsks = calibCandidates.map((a) => ({
+    id: a.id,
+    name: a.name,
+    loggedCount30: a.loggedCount30,
+  }));
+
+  return {
+    dailyAuto: dailyAuto.slice(0, 6),
+    specials: chips,
+    others,
+    todaySpecialCount,
+    budget: 3,
+    calibration: calibrationAsset
+      ? { id: calibrationAsset.id, name: calibrationAsset.name, loggedCount30: calibrationAsset.loggedCount30 }
+      : null,
+    watchHint: watchAsset
+      ? {
+          id: watchAsset.id,
+          name: watchAsset.name,
+          daysSinceLastUse: watchAsset.lastUsedAt ? daysBetween(watchAsset.lastUsedAt, asOf) : null,
+        }
+      : null,
+    watchPool,
+    calibPool: calibAsks,
+  };
+}
+
 export async function getTodayView(): Promise<TodayView> {
   const instance = await db();
   const asOf = todayIso();
   const then = addDays(asOf, -30);
+  const weekAgo = addDays(asOf, -7);
   const yesterday = addDays(asOf, -1);
   const date = new Date(`${asOf}T00:00:00`);
 
@@ -178,17 +352,25 @@ export async function getTodayView(): Promise<TodayView> {
     instance,
     assets.map((a) => a.id),
   );
-  const life = await listLifeEvents(instance, 60);
+  const life = await listLifeEvents(instance, 80);
 
   const nowP = portfolio(assets, eventsByAsset, asOf);
   const thenP = portfolio(assets, eventsByAsset, then);
+  const weekP = portfolio(assets, eventsByAsset, weekAgo);
   const yP = portfolio(assets, eventsByAsset, yesterday);
+
+  const usedByLife = new Set(
+    life
+      .filter((e) => e.type === "use")
+      .map((e) => `${(e.payload as { assetId?: string } | null)?.assetId ?? ""}|${e.occurredAt}`),
+  );
 
   let acquired30 = 0;
   const timeline: TimelineItem[] = [];
   for (const asset of assets) {
     for (const e of eventsByAsset.get(asset.id) ?? []) {
       if (e.occurredAt >= then && e.occurredAt <= asOf && e.type === "acquired") acquired30 += 1;
+      if (e.type === "usage_logged" && usedByLife.has(`${asset.id}|${e.occurredAt}`)) continue;
       if (["acquired", "depleted", "disposed", "valued", "usage_calibrated", "usage_logged"].includes(e.type)) {
         const label =
           e.type === "acquired"
@@ -208,23 +390,34 @@ export async function getTodayView(): Promise<TodayView> {
           title: `${label} ${asset.name}`,
           detail: asset.category,
           href: `/assets/${asset.id}`,
+          createdAt: e.createdAt,
         });
       }
     }
   }
 
   for (const e of life) {
-    const payload = (e.payload ?? {}) as { label?: string };
+    const payload = (e.payload ?? {}) as { label?: string; assetId?: string; skillId?: string };
+    const href =
+      typeof payload.assetId === "string"
+        ? `/assets/${payload.assetId}`
+        : typeof payload.skillId === "string"
+          ? `/skills/${payload.skillId}`
+          : undefined;
     timeline.push({
       id: e.id,
       date: e.occurredAt,
-      title: RITUAL_TITLE[e.type] ?? e.type,
+      title: ritualTimelineTitle(e.type, payload.label),
       detail: payload.label ?? "今日动作",
-      href: typeof (e.payload as { assetId?: string })?.assetId === "string" ? `/assets/${(e.payload as { assetId: string }).assetId}` : undefined,
+      href,
+      createdAt: e.createdAt,
     });
   }
 
-  timeline.sort((a, b) => (a.date === b.date ? 0 : a.date < b.date ? 1 : -1));
+  timeline.sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+    return (a.createdAt ?? "") < (b.createdAt ?? "") ? 1 : -1;
+  });
 
   const todayLife = life.filter((e) => e.occurredAt === asOf);
   const todayRituals = (["use", "learn", "save", "create", "clean"] as RitualKey[]).map((key) => {
@@ -264,10 +457,15 @@ export async function getTodayView(): Promise<TodayView> {
       valueThen: thenP.value / 100,
     },
     insight: pickInsight(asOf, { streak, now: nowP, then: thenP, acquired30 }),
-    timeline: timeline.slice(0, 10),
+    recentChanges: buildRecentChanges(assets, eventsByAsset, asOf, weekAgo, nowP, weekP),
+    usageRateNow: nowP.usageRate,
+    usageDelta30: nowP.usageRate - thenP.usageRate,
+    timeline: timeline.slice(0, 20),
     todayRituals,
     ritualAssets,
     ritualSkills,
+    capture: buildCaptureToday(assets, eventsByAsset, asOf),
+    season: buildSeasonToday(assets, eventsByAsset, asOf),
     restock: collectRestockReminders(
       assets.filter((a) => a.status === "active").map((a) => summarize(a, eventsByAsset.get(a.id) ?? [], asOf)),
       asOf,

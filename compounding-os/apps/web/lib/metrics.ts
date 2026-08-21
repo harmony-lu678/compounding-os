@@ -3,11 +3,15 @@ import {
   computeDurable,
   todayIso,
   type AssetEvent,
+  type CaptureMode,
   type ConsumableMetrics,
+  type Seasonality,
   type DurableMetrics,
   type EventType,
 } from "@compos/core";
 import type { AssetRow, EventRow } from "@compos/db";
+import { resolveCaptureMode } from "@/lib/capture";
+import { resolveSeasonality } from "@/lib/season";
 
 export function toAssetEvents(rows: EventRow[]): AssetEvent[] {
   return rows.map((row) => ({
@@ -44,6 +48,8 @@ export interface AssetSummary {
   status: string;
   priceCents: number;
   createdAt: string;
+  captureMode: CaptureMode;
+  seasonality: Seasonality;
   metrics: AssetMetrics;
 }
 
@@ -56,6 +62,8 @@ export function summarize(asset: AssetRow, eventRows: EventRow[], asOf?: string)
     status: asset.status,
     priceCents: asset.priceCents,
     createdAt: asset.createdAt,
+    captureMode: resolveCaptureMode(asset, eventRows),
+    seasonality: resolveSeasonality(asset),
     metrics: computeAssetMetrics(asset, eventRows, asOf),
   };
 }

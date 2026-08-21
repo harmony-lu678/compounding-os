@@ -8,19 +8,16 @@ import { IconPlus, NAV_ICONS } from "@/components/icons";
 const NAV = [
   { href: "/", label: "今日", icon: NAV_ICONS.ledger },
   { href: "/assets", label: "资产", icon: NAV_ICONS.assets },
-  { href: "/weekly", label: "变化", icon: NAV_ICONS.chart },
-  { href: "/settings", label: "设定", icon: NAV_ICONS.me },
+  { href: "/review", label: "变化", icon: NAV_ICONS.chart },
 ] as const;
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
+  if (href === "/") return pathname === "/" || pathname.startsWith("/season");
   if (href === "/assets") {
-    return (
-      pathname === "/assets" ||
-      pathname.startsWith("/assets/") ||
-      pathname.startsWith("/skills/") ||
-      pathname.startsWith("/plan")
-    );
+    return pathname === "/assets" || pathname.startsWith("/assets/") || pathname.startsWith("/skills/");
+  }
+  if (href === "/review") {
+    return pathname === "/review" || pathname.startsWith("/review/") || pathname.startsWith("/weekly");
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -42,7 +39,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
           <span className="leading-tight">
             <span className="block text-sm font-semibold tracking-tight">Compounding</span>
-            <span className="block text-xs text-ink-soft">个人账本</span>
+            <span className="block text-xs text-ink-soft">每日复利</span>
           </span>
         </Link>
 
@@ -71,45 +68,26 @@ export function AppShell({ children }: { children: ReactNode }) {
             <IconPlus size={18} />
             记一笔
           </Link>
-          <div className="px-2 text-[11px] text-ink-soft/70">Self-hosted · Local</div>
+          <Link href="/settings" className="block px-2 text-xs text-ink-soft hover:text-ink">
+            设定
+          </Link>
         </div>
       </aside>
 
       <main className="flex-1 md:ml-[232px] pb-24 md:pb-10">
-        <div className="mx-auto w-full max-w-[920px] px-4 pt-5 sm:px-8 md:pt-8">{children}</div>
+        <div className="mx-auto w-full max-w-[920px] px-4 pt-5 sm:px-8 md:pt-8">
+          <div className="mb-3 flex justify-end md:hidden">
+            <Link href="/settings" className="text-xs text-ink-soft hover:text-ink">
+              设定
+            </Link>
+          </div>
+          {children}
+        </div>
       </main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-line bg-card/95 backdrop-blur-md">
-        <div className="flex items-end justify-between px-3 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          {NAV.slice(0, 2).map((item) => {
-            const active = isActive(pathname, item.href);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex w-16 flex-col items-center gap-0.5 py-1.5 text-[11px] ${
-                  active ? "text-ink font-medium" : "text-ink-soft"
-                }`}
-              >
-                <Icon size={22} />
-                {item.label}
-              </Link>
-            );
-          })}
-
-          <div className="relative flex w-16 flex-col items-center">
-            <Link
-              href="/assets/new"
-              className="absolute -top-5 flex h-12 w-12 items-center justify-center rounded-full bg-brand text-ink shadow-[0_8px_20px_rgb(240,201,74,0.45)] active:scale-95"
-              aria-label="记一笔"
-            >
-              <IconPlus size={24} />
-            </Link>
-            <span className="mt-8 text-[11px] text-ink-soft">记一笔</span>
-          </div>
-
-          {NAV.slice(2).map((item) => {
+        <div className="flex items-center justify-around px-6 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          {NAV.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = item.icon;
             return (

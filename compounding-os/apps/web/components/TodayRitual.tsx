@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   RITUALS,
+  timelineItemFromRecord,
   type RitualCount,
   type RitualKey,
   type RitualOptionAsset,
   type RitualOptionSkill,
+  type TimelineItem,
 } from "@/lib/today-types";
 
 type Sheet = RitualKey | null;
@@ -16,10 +18,12 @@ export function TodayRitual({
   counts,
   assets,
   skills,
+  onRecorded,
 }: {
   counts: RitualCount[];
   assets: RitualOptionAsset[];
   skills: RitualOptionSkill[];
+  onRecorded?: (item: TimelineItem, ritual: RitualKey, lastLabel?: string) => void;
 }) {
   const router = useRouter();
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -60,6 +64,14 @@ export function TodayRitual({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error?.message ?? "记录失败");
+      const type = (body as { type?: RitualKey }).type;
+      if (type && json.event) {
+        onRecorded?.(
+          timelineItemFromRecord({ type, event: json.event, label: json.label ?? "" }),
+          type,
+          json.label,
+        );
+      }
       close();
       router.refresh();
     } catch (err) {

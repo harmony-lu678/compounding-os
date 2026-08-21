@@ -1,5 +1,6 @@
 import { eventPayloadByType, todayIso, type EventType } from "@compos/core";
 import { appendEvent, getAsset, getAssetEvents } from "@compos/db";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { apiError, apiOk } from "@/lib/api";
 import { db } from "@/lib/db";
@@ -40,6 +41,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     occurredAt: parsed.data.occurredAt,
     payload: payloadResult.data,
   });
+
+  revalidatePath("/");
+  revalidatePath("/assets");
+  revalidatePath(`/assets/${id}`);
+  revalidatePath("/review");
 
   const refreshedAsset = await getAsset(instance, id);
   const events = await getAssetEvents(instance, id);

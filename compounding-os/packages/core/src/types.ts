@@ -143,6 +143,13 @@ export const assumptionChangedPayloadSchema = z.object({
 export const usageCalibratedPayloadSchema = z.object({
   periodDays: z.number().positive(),
   count: z.number().nonnegative(),
+  oldLabel: z.string().optional(),
+});
+
+export const replenishedPayloadSchema = z.object({
+  previousCycleDays: z.number().int().nonnegative().optional(),
+  daysLeft: z.number().optional(),
+  note: z.string().optional(),
 });
 
 export const usageLoggedPayloadSchema = z.object({
@@ -178,6 +185,7 @@ export const eventTypeSchema = z.enum([
   "valued",
   "depleted",
   "disposed",
+  "replenished",
 ]);
 export type EventType = z.infer<typeof eventTypeSchema>;
 
@@ -190,6 +198,7 @@ export const eventPayloadByType = {
   valued: valuedPayloadSchema,
   depleted: depletedPayloadSchema,
   disposed: disposedPayloadSchema,
+  replenished: replenishedPayloadSchema,
 } as const;
 
 export interface AssetEvent<
